@@ -21,7 +21,7 @@ type LoginFormData = z.infer<typeof loginSchema>;
 
 const Login = () => {
   const [showLoginSuccess, setShowLoginSuccess] = useState(false);
-
+console.log(showLoginSuccess)
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
   });

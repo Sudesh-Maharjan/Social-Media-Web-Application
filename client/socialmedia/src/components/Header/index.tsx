@@ -5,10 +5,12 @@ import { FaUser } from "react-icons/fa";
 import { FiLogOut } from "react-icons/fi";
 import { CiSettings } from "react-icons/ci";
 import { useDispatch, useSelector } from 'react-redux';
-import { toggleTheme } from '@/redux/themeSlice';
+import { toggleTheme } from '@/redux/slices/themeSlice';
 import connectwhitelogo from '../../../public/images/connectwhite.png'
 import connectblacklogo from '../../../public/images/connecblack.png'
 import { AppState } from '@/types';
+import { IoIosNotifications } from "react-icons/io";
+import { IoIosChatboxes } from "react-icons/io";
 const Index = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [userName, setUserName] = useState('');
@@ -64,8 +66,16 @@ if(userData){
        </div>
        <div className="flex items-center">
        <div className="relative" ref={dropdownRef}>
+         {/* Chat and Notification buttons */}
+        <div className="flex gap-4 p-2">
+        <button className='rounded-full bg-slate-200 p-2 text-secondary-foreground hover:bg-slate-300 transition duration-200'>
+        <IoIosChatboxes className='text-2xl'/>
+        </button>
+        <button className='rounded-full bg-slate-200 p-2 text-secondary-foreground hover:bg-slate-300 transition duration-200'>
+        <IoIosNotifications className='text-2xl'/>
+        </button>
               <button
-                className="flex text-white items-center focus:outline-none"
+                className="flex text-white items-center focus:outline-none "
                 onClick={toggleDropdown}
               >
                 <img
@@ -75,8 +85,9 @@ if(userData){
                 />
                 <RiArrowDropDownLine className={`text-${darkMode ? 'white' : 'black'} text-2xl`} />
               </button>
+              </div>
               {isDropdownOpen && (
-                <div className={`absolute right-0 mt-5 w-48 ${darkMode ? 'bg-secondary-foreground' : 'bg-white'} shadow-lg py-1 rounded-md flex flex-col text-${darkMode ? 'white' : 'black'}`}>
+                <div className={`absolute right-0 mt-2 w-48 ${darkMode ? 'bg-secondary-foreground' : 'bg-white'} shadow-lg py-1 rounded-md flex flex-col text-${darkMode ? 'white' : 'black'}`}>
                   <div className="px-4 py-2 flex items-center gap-3">
                     <FaUser />
                     <span className={`text-${darkMode ? 'white' : 'black'}`}>{userName}</span>

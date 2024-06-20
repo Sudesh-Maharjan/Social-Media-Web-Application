@@ -1,9 +1,11 @@
 import Header from '../../components/Header/index'
+import Post from '../../components/Post/index'
 const index = () => {
   return (
-    <div>
+    <>
       <Header/>
-    </div>
+      <Post/>
+    </>
   )
 }
 

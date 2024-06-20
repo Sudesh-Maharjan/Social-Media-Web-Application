@@ -4,3 +4,7 @@ export interface ThemeState {
 export interface AppState{
    theme: ThemeState;
 }
+export interface Post {
+_id: number;
+content: string;
+}

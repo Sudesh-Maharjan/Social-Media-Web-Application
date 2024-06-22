@@ -1,0 +1,60 @@
+.scrollable-container {
+   max-height: 500px; /* Set the maximum height of the container */
+   overflow-y: auto; /* Enable vertical scrolling */
+   scrollbar-width: none; /* Set the width of the scrollbar */
+   scrollbar-color: rgba(0, 0, 0, 0.5) rgba(0, 0, 0, 0.1); /* Set the color of the scrollbar */
+ }
+ 
+ /* Track */
+ .scrollable-container::-webkit-scrollbar-track {
+   background: rgba(255, 255, 255, 0.1); /* Color of the track */
+ }
+ 
+ /* Handle */
+ .scrollable-container::-webkit-scrollbar-thumb {
+   background: rgba(155, 155, 155, 0.5); /* Color of the scrollbar handle */
+   border-radius: 10px; /* Rounded corners */
+ }
+ 
+ /* Handle on hover */
+ .scrollable-container::-webkit-scrollbar-thumb:hover {
+   background: rgba(155, 155, 155, 0.8); /* Color of the scrollbar handle on hover */
+ }
+
+ /*Error BOundary*/
+ .fallback-ui {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+}
+
+.minion {
+  width: 250px; /* adjust size as needed */
+  height: auto;
+  animation: hammering 2s infinite;
+}
+
+/* sidebar */
+.sidebar-container {
+  position: fixed;
+  top: 0;
+  right: -300px; 
+  width: 300px;
+  height: 100%;
+  background-color: #fff;
+  box-shadow: -2px 0 5px rgba(0, 0, 0, 0.5);
+  transition: right 0.3s ease;
+  z-index: 1000; 
+}
+
+.sidebar-container.open {
+  right: 0;
+}
+
+.sidebar {
+  padding: 20px;
+}
+
+

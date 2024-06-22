@@ -2,6 +2,7 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 import API_BASE_URL from '@/config';
 import {Post} from '@/types';
+import { toast } from 'sonner';
  
  interface PostState {
    posts: Post[];
@@ -34,31 +35,34 @@ import {Post} from '@/types';
    }
  });
 
- export const createPost = createAsyncThunk('posts/createPost', async (postData: {content: string; status: string }) => {
+ export const createPost = createAsyncThunk('posts/createPost',  async (formData: FormData)  => {
    try {
       const accessToken = getAccessToken();
-     const response = await axios.post<Post[]>(`${API_BASE_URL}/posts`, postData, {
+     const response = await axios.post<Post[]>(`${API_BASE_URL}/posts`, formData, {
       headers: {
-         Authorization: `Bearer ${accessToken}`
+         Authorization: `Bearer ${accessToken}`,
       }
      });
+     toast.success('Post created successfully!')
      return response.data;
    } catch (error) {
-     throw Error('Failed to create post');
+     toast.error('Failed to create post');
    }
  });
-export const updatePost = createAsyncThunk('posts/updatePost', async ({id, content}: {id:number, content: string})=> {
+export const updatePost = createAsyncThunk('posts/updatePost', async ({id, formData}: {id:number, formData: FormData})=> {
   try {
     const accessToken = getAccessToken();
-    const response = await axios.put<Post[]>(`${API_BASE_URL}/posts/${id}`, {content},{
+    const response = await axios.put<Post[]>(`${API_BASE_URL}/posts/${id}`,  formData,{
       headers: {
-        Authorization: `Bearer ${accessToken}`
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'multipart/form-data',
       }
     });
+    toast.success('Post updated successfully!');
     return response.data;
   } catch (error: any) {
     console.error('Error updating post:', error.response ? error.response.data : error.message);
-throw Error('Failed to update post!');    
+toast.error('Failed to update post!');    
   }
 })
 export const deletePost = createAsyncThunk('posts/deletePost', async (id: number)=>{
@@ -69,11 +73,34 @@ export const deletePost = createAsyncThunk('posts/deletePost', async (id: number
         Authorization: `Bearer ${accessToken}`
       }
     });
+    toast.success('Post deleted successfully!')
     return id;
   } catch (error) {
-    throw Error('Failed to delete post!')
+    toast.error('Failed to delete post!')
   }
 })
+export const likePost = createAsyncThunk(
+  'posts/likePost',
+  async ({ postId, actionType }: { postId: number; actionType: 'like' | 'dislike' }, { rejectWithValue }) => {
+    try {
+      const accessToken = getAccessToken();
+      let url = `${API_BASE_URL}/posts/${postId}/like`;
+      if (actionType === 'dislike') {
+        url = `${API_BASE_URL}/posts/${postId}/dislike`;
+      }
+      const response = await axios.post(url, null, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      
+      });
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response.data);
+    }
+  }
+);
+
 const postSlice = createSlice({
   name: 'posts',
   initialState,
@@ -121,7 +148,7 @@ const postSlice = createSlice({
       })
       .addCase(updatePost.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.error.message;
+        state.error = action.payload ? action.payload.toString() : 'Failed to update post';
       })
       .addCase(deletePost.pending, (state) => {
         state.loading = true;
@@ -135,7 +162,19 @@ const postSlice = createSlice({
       .addCase(deletePost.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message;
+      })
+      .addCase(likePost.fulfilled, (state, action) => {
+        // Update state after successful like
+        const likedPost = state.posts.find(post => post._id === action.payload._id);
+        if (likedPost) {
+          likedPost.likes = action.payload.likes;
+        }
+      })
+      .addCase(likePost.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message || 'Failed to like/dislike post';
       });
+  
   },
 });
 

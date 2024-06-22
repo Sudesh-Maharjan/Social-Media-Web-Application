@@ -8,6 +8,7 @@ const store = configureStore({
     posts:postReducer,
     theme: themeReducer,
     auth: authReducer,
+    
   },
 });
 export type RootState = ReturnType<typeof store.getState>;

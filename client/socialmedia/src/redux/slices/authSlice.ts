@@ -5,6 +5,7 @@ interface AuthState {
   refreshToken: string | null;
   isAuthenticated: boolean;
   error: string | null;
+  userId: string | null; 
 }
 
 const initialState: AuthState = {
@@ -12,14 +13,17 @@ const initialState: AuthState = {
   refreshToken: null,
   isAuthenticated: false,
   error: null,
+  userId: null,
 };
 
 const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
-    setAccessToken: (state, action: PayloadAction<string>) => {
-      state.accessToken = action.payload;
+    setAccessToken: (state, action: PayloadAction<{token: string; userId: string}>) => {
+      const { token, userId } = action.payload;
+      state.accessToken = token;
+      state.userId = userId;
       state.isAuthenticated = true;
       state.error = null;
     },
@@ -30,6 +34,7 @@ const authSlice = createSlice({
       state.accessToken = null;
       state.refreshToken = null;
       state.isAuthenticated = false;
+      state.userId = null;
     },
     setError: (state, action: PayloadAction<string>) => {
       state.error = action.payload;

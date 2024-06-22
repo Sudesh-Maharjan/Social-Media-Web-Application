@@ -11,6 +11,9 @@ interface User {
   otpExpires?: Date;
   resetToken?: string;
   resetTokenExpires?: Date;
+  createdPosts: mongoose.Types.ObjectId[];
+  likedPosts: mongoose.Types.ObjectId[];
+  sharedPosts: mongoose.Types.ObjectId[];
 }
 
 const userSchema: Schema = new Schema({
@@ -47,6 +50,24 @@ const userSchema: Schema = new Schema({
   resetTokenExpires: {
     type: Date,
   },
+  createdPosts: [
+    {
+      type: Schema.Types.ObjectId,
+      ref: "Post",
+    },
+  ],
+  likedPosts: [
+    {
+      type: Schema.Types.ObjectId,
+      ref: "Post",
+    },
+  ],
+  sharedPosts: [
+    {
+      type: Schema.Types.ObjectId,
+      ref: "Post",
+    },
+  ],
 });
 
 const User = mongoose.model<User>("User", userSchema);

@@ -5,6 +5,8 @@ import { checkPostOwnership } from "../../../Middleware/postAuthorization";
 
 import User from '../Users/model';
 import moment from 'moment';
+import fs from 'fs';
+import path from 'path';
 let currentId = 1;
 
 export const createPost = async (req: Request, res: Response) => {
@@ -42,8 +44,11 @@ export const createPost = async (req: Request, res: Response) => {
   });
 
     const newPost = await post.save();
+
+    const populatedPost = await Post.findById(newPost._id).populate('creatorID', 'firstName lastName');
+    const creator = populatedPost?.creatorID as User;
     const formattedCreateDate = newPost.createDate.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-    const creatorName = `${user.firstName} ${user.lastName}`;
+    const creatorName = `${creator.firstName} ${creator.lastName}`;
     return res.status(StatusCodes.CREATED).json({
       ...newPost.toObject(),
       creatorName,
@@ -142,7 +147,13 @@ export const updatePost = async (req: Request, res: Response) => {
     return;
   }
 };
-
+const deleteFile = (filePath: string) => {
+  fs.unlink(filePath, (err) => {
+    if (err) {
+      console.error(`Error deleting file: ${filePath}`, err);
+    }
+  });
+};
 export const deletePost = async (req: Request, res: Response) => {
   const postId = req.params.id;
   const userId = (req as any).user?.id;
@@ -154,6 +165,10 @@ export const deletePost = async (req: Request, res: Response) => {
     }
     if (post.creatorID.toString() !== userId) {
       return res.status(StatusCodes.FORBIDDEN).json({ message: 'You are not authorized to delete this post' });
+    }
+    if (post.image) {
+      const imagePath = path.join(__dirname, '../../../../../client/socialmedia/public', post.image);
+      deleteFile(imagePath);
     }
     await Post.deleteOne({ _id: postId });
    return res.json({ message: 'Post deleted successfully' });

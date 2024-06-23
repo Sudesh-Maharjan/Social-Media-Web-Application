@@ -28,7 +28,7 @@ const PostComponent = () => {
   const { posts, loading, error } = useSelector(
     (state: RootState) => state.posts
   );
-  const {userId} = useSelector((state: RootState) => state.auth);
+  const userId = useSelector((state: RootState) => state.auth.userId);
   console.log(userId)
   const [content, setContent] = useState("");
   const [image, setImage] = useState<File | null>(null);
@@ -94,7 +94,7 @@ const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
   };
  const handleLike = (postId: number) => {
     if (userId) {
-      dispatch(likePost({ postId }));
+      dispatch(likePost( postId ));
     } else {
       console.error('User ID is null.');
     }

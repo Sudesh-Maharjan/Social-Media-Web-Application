@@ -3,21 +3,23 @@ import { Outlet, useNavigate } from 'react-router-dom';
 import Cookies from 'js-cookie'
 import Login from '@/pages/Login/Login';
 import { toast } from 'sonner';
-
+import { useDispatch } from 'react-redux';
+import { setAccessToken } from '@/redux/slices/authSlice';
 interface JwtPayload {
   exp: number;
+  userId: string;
   [key: string]: any;
 }
 const Protected = () => {
   const navigate = useNavigate();
-  const [accessToken, setAccessToken] = useState<string | null>(null);
+  const dispatch = useDispatch();
+  const [accessToken, setAccessTokenState] = useState<string | null>(null);
   useEffect(() => {
     const token = localStorage.getItem('accessToken');
     
     console.log('Protected Routes token:',token);
     if (token) {
-      
-      setAccessToken(token);
+      setAccessTokenState(token);
       try {
         const decodedToken = parseJwt(token) as JwtPayload;
         const currentTime = Date.now() / 1000;
@@ -26,6 +28,8 @@ const Protected = () => {
           // Token has expired
           console.log('Token has expired!')
           handleLogout();
+        }else {
+          dispatch(setAccessToken({ token, userId: decodedToken.userId }));
         }
       } catch (error) {
         // If there's an error decoding the token, handle it by logging out

@@ -10,7 +10,6 @@ export interface Post {
   status: "draft" | "published";
   comments: mongoose.Types.ObjectId[];
   likes: mongoose.Types.ObjectId[];
-  dislikes: mongoose.Types.ObjectId[];
   shares: mongoose.Types.ObjectId[];
   image?: string;
 }
@@ -50,12 +49,6 @@ const PostSchema: Schema<Post> = new Schema({
     {
       type: Schema.Types.ObjectId,
       ref: "User",
-    },
-  ],
-  dislikes: [
-    {
-      type: Schema.Types.ObjectId,
-      ref: 'User',
     },
   ],
   shares: [

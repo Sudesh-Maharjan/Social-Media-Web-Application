@@ -3,6 +3,7 @@ import axios from 'axios';
 import API_BASE_URL from '@/config';
 import {Post} from '@/types';
 import { toast } from 'sonner';
+import { RootState } from '../store';
  
  interface PostState {
    posts: Post[];
@@ -81,25 +82,32 @@ export const deletePost = createAsyncThunk('posts/deletePost', async (id: number
 })
 export const likePost = createAsyncThunk(
   'posts/likePost',
-  async ({ postId, actionType }: { postId: number; actionType: 'like' | 'dislike' }, { rejectWithValue }) => {
-    try {
-      const accessToken = getAccessToken();
-      let url = `${API_BASE_URL}/posts/${postId}/like`;
-      if (actionType === 'dislike') {
-        url = `${API_BASE_URL}/posts/${postId}/dislike`;
-      }
-      const response = await axios.post(url, null, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      
-      });
-      return response.data;
-    } catch (error) {
-      return rejectWithValue(error.response.data);
+  async (postId: string, { getState }) => {
+    const state = getState() as RootState;
+    const { userId, accessToken } = state.auth;
+    
+    if (!userId || !accessToken) {
+      throw new Error('User is not authenticated');
     }
+
+    // Your API call here
+    const response = await fetch(`/api/posts/${postId}/like`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${accessToken}`
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to like the post');
+    }
+
+    const data = await response.json();
+    return data;
   }
 );
+
 
 const postSlice = createSlice({
   name: 'posts',

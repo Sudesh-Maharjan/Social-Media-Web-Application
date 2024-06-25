@@ -8,7 +8,6 @@ import commentRoutes from './routes/v1/Comment/index';
 import path from 'path';
 import { Server } from 'socket.io';
 import http from 'http';
-import { send } from 'process';
 
 dotenv.config();
 

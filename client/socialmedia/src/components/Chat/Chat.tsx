@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import '../../../public/css/styles.css'
 const Chat = () => {
    const [message, setMessage] = useState<string>('');
-const [messages, setMessages] = useState<string[]>([]);
+const [messages, setMessages] = useState<{ message: string, senderId: string }[]>([]);
 const [userId, setUserId] = useState<string>('');
   const [typingUsers, setTypingUsers] = useState<string[]>([]);
 
@@ -21,7 +21,7 @@ const [userId, setUserId] = useState<string>('');
          setUserId(socket.id || '');
       })
       socket.on('message', (newMessage: { message: string, senderId: string}) => {
-            setMessages((prevMessages) => [...prevMessages, newMessage.message]);
+            setMessages((prevMessages) => [...prevMessages, newMessage]);
          socket.on('typing', ({senderId} : {senderId: string}) => {
             if(senderId !== userId) {
                setTypingUsers((prevTypingUsers) => [...new Set([...prevTypingUsers, senderId])]);
@@ -50,6 +50,7 @@ const [userId, setUserId] = useState<string>('');
       if(message.trim() !== ''){
          const newMessage = { message, senderId: userId};
          socket.emit('message', newMessage);
+         setMessages((prevMessages) => [...prevMessages, newMessage]);
          setMessage('');
       }
    };
@@ -63,9 +64,9 @@ const [userId, setUserId] = useState<string>('');
               <div
                 key={index}
                 className="flex justify-center items-center p-2 rounded-2xl bg-black text-white mx-2 my-3"
-                style={{ maxWidth: calculateWidth(msg) }}
+                style={{ maxWidth: calculateWidth(msg.message) }}
               >
-                {msg}
+                {msg.message}
               </div>
             ))}
              

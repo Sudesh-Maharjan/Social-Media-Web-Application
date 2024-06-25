@@ -40,6 +40,7 @@ console.log(showLoginSuccess)
         Cookies.set('accessToken', accessToken, { expires: 1 });
         localStorage.setItem('refreshToken', refreshToken);
         localStorage.setItem('User_data', JSON.stringify(response.data.user));
+        localStorage.setItem('userId', response.data.user.id); 
 
         toast.success('Login successful!');
         setShowLoginSuccess(true);

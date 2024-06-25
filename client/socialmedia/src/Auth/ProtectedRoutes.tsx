@@ -16,9 +16,10 @@ const Protected = () => {
   const [accessToken, setAccessTokenState] = useState<string | null>(null);
   useEffect(() => {
     const token = localStorage.getItem('accessToken');
-    
+    const userId = localStorage.getItem('userId');
+
     console.log('Protected Routes token:',token);
-    if (token) {
+    if (token && userId) {
       setAccessTokenState(token);
       try {
         const decodedToken = parseJwt(token) as JwtPayload;
@@ -29,7 +30,7 @@ const Protected = () => {
           console.log('Token has expired!')
           handleLogout();
         }else {
-          dispatch(setAccessToken({ token, userId: decodedToken.userId }));
+          dispatch(setAccessToken({ token, userId}));
         }
       } catch (error) {
         // If there's an error decoding the token, handle it by logging out
@@ -47,6 +48,7 @@ const Protected = () => {
     toast('Session Expired! Please login again.');
     Cookies.remove('accessToken');
     localStorage.removeItem('accessToken');
+    localStorage.removeItem('userId');
     setTimeout(() => {
     navigate('/');
     }, 1000);

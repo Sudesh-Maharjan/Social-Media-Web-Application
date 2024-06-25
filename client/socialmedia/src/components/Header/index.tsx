@@ -12,21 +12,43 @@ import { AppState } from '@/types';
 import { IoIosNotifications } from "react-icons/io";
 import { IoIosChatboxes } from "react-icons/io";
 import { RiSearchLine } from 'react-icons/ri';
-import '../../../public/css/styles.css'
+import '../../../public/css/styles.css';
+import socket from '@/socket';
+import { AppDispatch } from '@/redux/store';
+import { searchUsers , selectUsers} from '@/redux/slices/userSlice';
+import { User } from '@/types';
+
+
 const Index = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [userName, setUserName] = useState('');
+  const [notifications, setNotifications] = useState<string[]>([]);
+
   const darkMode = useSelector((state: AppState) => state.theme.darkMode);
-  const dispatch = useDispatch();
+  const users = useSelector(selectUsers);
+  const dispatch:AppDispatch = useDispatch();
   const navigate = useNavigate();
   const dropdownRef = useRef<HTMLDivElement>(null);//dropdown when clicked outside
   const notificationRef = useRef<HTMLDivElement>(null);
   const chatRef = useRef<HTMLDivElement>(null);
 
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResultsVisible, setSearchResultsVisible] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    socket.on('notification', (data: any) => {
+      setNotifications((prevNotifications) => [data.message, ...prevNotifications]);
+    });
+
+    return () => {
+      socket.off('notification');
+    };
+  }, []);
+  console.log(notifications)
   useEffect(()=>{
    const handleClickOutside = (event: MouseEvent)=>{
       if(dropdownRef.current && !dropdownRef.current.contains(event.target as Node)){
@@ -48,6 +70,14 @@ const Index = () => {
    };
 }, []);
 
+useEffect(() => {
+  const userData = localStorage.getItem('User_data');
+  if(userData){
+     const user = JSON.parse(userData);
+     setUserName(user.firstName + ' ' + user.lastName);
+  }
+    }, []);
+
 // Navbar dropdown
   const toggleDropdown = () => {
     setIsDropdownOpen(!isDropdownOpen);
@@ -61,22 +91,38 @@ const Index = () => {
   const toggleSearch = () => {
     setIsSearchOpen(!isSearchOpen);
   };
+
+  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(event.target.value);
+    setSearchResultsVisible(true);
+    if (event.target.value === '') {
+      setSearchResultsVisible(false);
+    } else {
+      dispatch(searchUsers(event.target.value));
+    }
+  };
+
   const handleLogout = () => {
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
     localStorage.removeItem('User_data');
-    // Cookies.remove('darkMode');
     navigate('/');
   };
-
-  useEffect(() => {
-const userData = localStorage.getItem('User_data');
-if(userData){
-   const user = JSON.parse(userData);
-   setUserName(user.firstName + ' ' + user.lastName);
-}
-  }, []);
-
+  //aruko
+  const handleUserSelect = (user: User) => {
+    setIsSearchOpen(false);
+    console.log('Clicked user:', user._id)
+    navigate(`/profile/${user._id}`);
+  };
+  //afnai
+  const navigateToUserProfile = () => {
+    const userData = localStorage.getItem('User_data');
+    console.log(userData)
+    if (userData) {
+      const user = JSON.parse(userData);
+      navigate(`/profile/${user.id}`);
+    }
+  };
   return (
    <nav className={`sticky z-10 border border-b-1 border-b-black ${darkMode ? 'bg-secondary-foreground' : 'bg-white'}`}>
    <div className="max-w-7xl mx-auto px-4">
@@ -92,6 +138,17 @@ if(userData){
        <div className="relative" ref={dropdownRef}>
          {/* Chat and Notification buttons */}
         <div className="flex gap-4 p-2">
+          <div className='relative'>
+        <input
+        ref={searchRef}
+          type="text"
+          className={`rounded-full bg-slate-200 p-2 text-secondary-foreground transition duration-200 ${
+            isSearchOpen ? 'block w-64' : 'hidden'
+          }`}
+          placeholder="Search..."
+          value={searchQuery}
+          onChange={handleSearchChange}
+        />
         <button
           onClick={toggleSearch}
           className={`rounded-full bg-slate-200 p-2 text-secondary-foreground hover:bg-slate-300 transition duration-200 ${
@@ -101,14 +158,23 @@ if(userData){
           <RiSearchLine className='text-2xl'/>
         </button>
         {/* Search input */}
-        <input
-        ref={searchRef}
-          type="text"
-          className={`rounded-full bg-slate-200 p-2 text-secondary-foreground transition duration-200 ${
-            isSearchOpen ? 'block w-48' : 'hidden'
-          }`}
-          placeholder="Search..."
-        />
+        
+  {searchResultsVisible && (
+                <div className={`absolute z-50 right-0 mt-2 w-64 ${darkMode ? 'bg-secondary-foreground' : 'bg-white'} shadow-lg py-1 rounded-md flex flex-col text-${darkMode ? 'white' : 'black'}`}>
+                  {users.length > 0 ? (
+                    users.map(user => (
+                      <div key={user._id} className={`px-4 py-2 cursor-pointer  flex flex-col ${darkMode? 'hover:bg-white hover:text-black' : 'hover:bg-black hover:text-white'}`} onClick={() =>handleUserSelect(user)}>
+                        
+                        <span>{user.firstName} {user.lastName}</span>
+                        <span className='text-sm'>{user.email}</span>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="px-4 py-2">No results found</p>
+                  )}
+                </div>
+              )}
+</div>
         <button className='rounded-full bg-slate-200 p-2 text-secondary-foreground hover:bg-slate-300 transition duration-200'>
         <IoIosChatboxes onClick={toggleChat} className='text-2xl'/>
         </button>
@@ -129,7 +195,7 @@ if(userData){
               </div>
               {isDropdownOpen && (
                 <div className={`absolute right-0 mt-2 w-48 ${darkMode ? 'bg-secondary-foreground' : 'bg-white'} shadow-lg py-1 rounded-md flex flex-col text-${darkMode ? 'white' : 'black'}`}>
-                  <div className="px-4 py-2 flex items-center gap-3">
+                  <div className="px-4 py-2 flex items-center gap-3" onClick={navigateToUserProfile}>
                     <FaUser />
                     <span className={`text-${darkMode ? 'white' : 'black'}`}>{userName}</span>
                   </div>
@@ -160,8 +226,9 @@ if(userData){
                   <div className="px-4 py-2 scrollable-container" style={{ maxHeight: "600px" }}>
                     <h4 className="font-semibold">Notifications</h4>
                     <div className="mt-2 " >
-                      <p className='hover:bg-slate-200 cursor-pointer transition duration-150 p-2 rounded-md '>Aadesh Maharjan sent you a follow request</p>
-                      <p>User456 liked your post</p>
+                      {notifications.map((notification, index) => (
+                      <p key={index} className='hover:bg-slate-200 cursor-pointer transition duration-150 p-2 rounded-md '>{notification}</p>
+                      ))}
                     </div>
                   </div>
                 </div>
@@ -186,5 +253,4 @@ if(userData){
  </nav>
   );
 };
-
 export default Index;

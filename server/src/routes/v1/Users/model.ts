@@ -14,6 +14,8 @@ interface User {
   createdPosts: mongoose.Types.ObjectId[];
   likedPosts: mongoose.Types.ObjectId[];
   sharedPosts: mongoose.Types.ObjectId[];
+  following: mongoose.Types.ObjectId[];
+  followers: mongoose.Types.ObjectId[];
 }
 
 const userSchema: Schema = new Schema({
@@ -66,6 +68,20 @@ const userSchema: Schema = new Schema({
     {
       type: Schema.Types.ObjectId,
       ref: "Post",
+    },
+  ],
+  // Here we are self referencing the user model because 
+  // each user document needs to refer to other user documents for follow and unfollow
+  followers: [
+    {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+    },
+  ],
+  following: [
+    {
+      type: Schema.Types.ObjectId,
+      ref: "User",
     },
   ],
 });

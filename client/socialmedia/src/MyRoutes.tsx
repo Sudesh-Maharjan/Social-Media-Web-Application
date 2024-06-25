@@ -5,21 +5,31 @@ import Login from "./pages/Login/Login";
 import Home from "./pages/Home/Home";
 import Protected from "./Auth/ProtectedRoutes";
 import ResetPassword from "./pages/ResetPassword/ResetPassword";
+import FollowUnfollow from "./pages/UserSuggestions/UserSiggestions";
+import UserProfile from "./pages/UserProfile/UserProfile";
 const MyRoutes = () => {
   return (
     <Router>
       <Routes>
+      <Route
+            path="/followunfollow"
+            element={
+                <FollowUnfollow />
+            }
+          />
         <Route path="/register" element={<Register />} />
         <Route path="/resetpassword" element={<ResetPassword />} />
         <Route path="/" element={<Login />} />
+        
         <Route element={<Protected />}>
           <Route
             path="/home"
             element={
-                <Home />
+              <Home />
             }
           />
-         
+          
+            <Route path="/profile/:userId" element={<UserProfile />} />
         </Route>
       </Routes>
     </Router>

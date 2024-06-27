@@ -7,10 +7,10 @@ const router = Router();
 
 router.post('/', auth,upload.single('image'), createPost);
 router.get('/', auth, getPosts);
-router.get('/:id', auth, checkPostOwnership, getPost);
-router.put('/:id', auth, checkPostOwnership, upload.single('image'), updatePost);
-router.delete('/:id', auth, checkPostOwnership, deletePost);
-router.post('/:id/like', auth, likeOrDislikePost);
-router.post('/:id/share', auth, sharePost);
+router.get('/:postId', auth, checkPostOwnership, getPost);
+router.put('/:postId', auth, checkPostOwnership, upload.single('image'), updatePost);
+router.delete('/:postId', auth, checkPostOwnership, deletePost);
+router.post('/:postId/like', auth, likeOrDislikePost);
+router.post('/:postId/share', auth, sharePost);
 
 export default router;

@@ -66,8 +66,14 @@ export const getPosts = async (req: Request, res: Response) => {
   const userId = (req as any).user?.id;
 
   try {
+    const user = await User.findById(userId).populate('following');
+    if(!user){
+      return res.status(StatusCodes.NOT_FOUND).send("User not found");
+    }
+    const followingIds = user.following.map(followedUser => followedUser._id);
+    followingIds.push(userId);
     let query: any = {
-      creatorID: userId
+      creatorID: { $in: followingIds}
     };
     if (tags) {
       const tagsArray = (tags as string).split(',').map(tag => tag.trim());
@@ -120,12 +126,12 @@ export const getPost = async (req: Request, res: Response) => {
 };
 
 export const updatePost = async (req: Request, res: Response) => {
-  const { id } = req.params;
+  const { postId } = req.params;
   const updates = req.body;
 
   try {
     await checkPostOwnership(req, res, async () => {
-      const post = await Post.findById(id);
+      const post = await Post.findById(postId);
       if (!post) {
          res.status(StatusCodes.NOT_FOUND).json({ message: "Post not found" });
          return;
@@ -139,7 +145,7 @@ export const updatePost = async (req: Request, res: Response) => {
         status: updates.status || post.status, 
       };
   
-      const updatedPost = await Post.findByIdAndUpdate(id, updatedPostData, { new: true });
+      const updatedPost = await Post.findByIdAndUpdate(postId, updatedPostData, { new: true });
      return res.json(updatedPost);
     });
   } catch (error: any) {
@@ -155,9 +161,9 @@ const deleteFile = (filePath: string) => {
   });
 };
 export const deletePost = async (req: Request, res: Response) => {
-  const postId = req.params.id;
+  const {postId} = req.params;
   const userId = (req as any).user?.id;
-
+const commentId = req.params.commentId;
   try {
     const post = await Post.findById(postId);
     if (!post) {
@@ -170,6 +176,7 @@ export const deletePost = async (req: Request, res: Response) => {
       const imagePath = path.join(__dirname, '../../../../../client/socialmedia/public', post.image);
       deleteFile(imagePath);
     }
+    await Post.findByIdAndUpdate(postId, { $pull: { comments: commentId} });
     await Post.deleteOne({ _id: postId });
    return res.json({ message: 'Post deleted successfully' });
   } catch (error) {

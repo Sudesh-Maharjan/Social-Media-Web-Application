@@ -81,19 +81,20 @@ export const register = async (req: Request, res: Response) => {
   try {
     const user = await User.findOne({ email });
     if (!user) return res.status(400).send('User not found');
-
+    
     if (!user.otp || !user.otpExpires || user.otp !== otp || user.otpExpires < new Date()) {
       return res.status(400).send('Invalid or expired OTP');
     }
-
+    
     const hashedPassword = await bcrypt.hash(password, 10);
-
+    
     user.password = hashedPassword;
     user.firstName = firstName;
     user.lastName = lastName;
     user.isVerified = true;
     user.otp = undefined;
     user.otpExpires = undefined;
+    user.following = [new mongoose.Types.ObjectId(user._id)]; // follow self by default
     await user.save();
     res.status(201).send('Registration Successful!');
   } catch (error: any) {

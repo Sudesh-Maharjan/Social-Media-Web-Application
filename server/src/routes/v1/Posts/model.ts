@@ -1,7 +1,7 @@
 import mongoose, { Schema } from "mongoose";
 import  User  from "../Users/model";
 export interface Post {
-  id: number;
+  id: string;
   content: string;
   createDate: Date;
   updateDate?: Date;

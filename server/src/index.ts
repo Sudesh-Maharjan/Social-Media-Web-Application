@@ -39,6 +39,20 @@ app.use('/api/v1/comments', commentRoutes);
 io.on('connection', (socket) =>{
    console.log('A new user has been connected', socket.id);
 
+   socket.on('join', (roomId: string, selectedUsers: string[]) => {
+      console.log(`User ${socket.id} joining room: ${roomId}`);
+      socket.join(roomId);
+      
+      if (selectedUsers && Array.isArray(selectedUsers)) {
+         selectedUsers.forEach((userId: string) => {
+            if (roomId.startsWith("group_chat")) {
+               socket.to(roomId).emit('roomCreated', { userId, roomId });
+            } else {
+               socket.to(userId).emit('roomCreated', { userId, roomId });
+            }
+         });
+      }
+    });
    socket.on("notification" , (data) => {
       io.emit('notification', data);
       console.log('Notification sent to: ', data.receiver);
@@ -47,12 +61,31 @@ io.on('connection', (socket) =>{
       const message = {
          message: msg.message,
          senderId: socket.id,
+         type:msg.type,
+         recipientId: msg.recipientId,
+         groupId: msg.groupId,
       }
       console.log('A new user message:', message);
-      socket.broadcast.emit('message', message);
+      //logic for selection of private chat or group chat
+      if(msg.type === 'private'){
+         io.to(msg.recipientId).emit('message', message);
+         io.to(msg.recipientId).emit('openChat', message);//open chat
+      }else if(msg.type === 'group'){
+         socket.to(msg.groupId).emit('message', message);
+         io.to(msg.groupId).emit('openChat', message);
+      }else{
+         socket.broadcast.emit('message', message);
+      }
    })
-   socket.on('typing', () => {
+   socket.on('typing', (data) => {
+      const {type, recipientId, groupId} = data;
+      if(type === 'private'){
+         socket.to(recipientId).emit('typing', {senderId: socket.id, type, recipientId});
+      }else if(type === 'group'){
+         socket.to(groupId).emit('typing', {senderId: socket.id, type, groupId});
+      }else{
       socket.broadcast.emit('typing', {senderId: socket.id});
+      }
    })
    socket.on('disconnect', (reason)=>{
       console.log(`User disconnected: ${socket.id}, reason: ${reason}`);

@@ -49,8 +49,8 @@ const PostComponent = () => {
     setImage(null);
   };
 
-  const handleDelete = (id: string) => {
-    dispatch(deletePost(id));
+  const handleDelete = (postId: string) => {
+    dispatch(deletePost(postId));
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -65,7 +65,7 @@ const PostComponent = () => {
 
     try {
       if (isEditing && currentPostId !== null) {
-        await dispatch(updatePost({ id: currentPostId, formData }));
+        await dispatch(updatePost({ postId: currentPostId, formData }));
       } else {
         await dispatch(createPost(formData));
       }

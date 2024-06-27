@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import Post from "../Posts/model";
 import { StatusCodes } from "http-status-codes";
 import Comment from '../Comment/model';
+import mongoose from 'mongoose';
 
 export const addComment = async (req: Request, res: Response) => {
   const { postId } = req.params;
@@ -70,6 +71,9 @@ export const deleteComment = async (req: Request, res: Response) => {
   const userId = (req as any).user.id;
 
   try {
+      if (!mongoose.Types.ObjectId.isValid(postId) || !mongoose.Types.ObjectId.isValid(commentId)) {
+        return res.status(StatusCodes.BAD_REQUEST).send("Invalid postId or commentId");
+      }
     const comment = await Comment.findById(commentId);
     if (!comment) {
       return res.status(StatusCodes.NOT_FOUND).send("Comment not found");

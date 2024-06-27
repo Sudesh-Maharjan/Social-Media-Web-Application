@@ -2,6 +2,7 @@ import API_BASE_URL from '@/config';
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 import { User } from '@/types';
+import { toast } from 'sonner';
  
 interface RootState {
   users: {
@@ -53,7 +54,7 @@ headers:{
 
 
 });
-export const followUser = createAsyncThunk('users/followUser', async (userIdToFollow: string, {getState}) => {
+export const followUser = createAsyncThunk('users/followUser', async (userIdToFollow: string) => {
    try {
       const accessToken = getAccessToken();
      const response = await axios.post(`${API_BASE_URL}/users/follow`, { userIdToFollow }, {
@@ -61,13 +62,9 @@ export const followUser = createAsyncThunk('users/followUser', async (userIdToFo
          Authorization: `Bearer ${accessToken}`
        }
      });
-     const updatedUser = response.data;  // Assuming the backend returns the updated user
-     const state = getState() as RootState;
-     const updatedUsers = state.users.users.map(user =>
-       user._id === updatedUser._id ? { ...user, isFollowing: true } : user
-     );
- 
-     return updatedUsers;
+     const updatedUser = response.data;
+     toast.success(`You are now following ${updatedUser.name}`);
+     return updatedUser;
    } catch (error) {
       throw (error as Error).message;
    }
@@ -89,7 +86,7 @@ export const followUser = createAsyncThunk('users/followUser', async (userIdToFo
    }
  );
  
- export const unfollowUser = createAsyncThunk('users/unfollowUser', async (userIdToUnfollow: string, {getState}) => {
+ export const unfollowUser = createAsyncThunk('users/unfollowUser', async (userIdToUnfollow: string) => {
    try {
       const accessToken = getAccessToken();
 
@@ -98,13 +95,9 @@ export const followUser = createAsyncThunk('users/followUser', async (userIdToFo
          Authorization: `Bearer ${accessToken}`
        }
      });
-     const updatedUser = response.data; 
-     const state = getState() as RootState;
-     const updatedUsers = state.users.users.map(user =>
-       user._id === updatedUser._id ? { ...updatedUser, isFollowing: false } : user
-     );
- 
-     return updatedUsers;
+     const updatedUser = response.data;
+    toast.success(`You have unfollowed ${updatedUser.name}`);
+     return updatedUser;
    } catch (error) {
       throw (error as Error).message;
    }
@@ -119,7 +112,7 @@ const userSlice = createSlice({
     logoutUser: (state) => {
       state.currentUser = null;
       localStorage.removeItem('accessToken');
-      localStorage.removeItem('userId'); // Remove user ID from local storage
+      localStorage.removeItem('userId');
     },
   },
    extraReducers: (builder) => {
@@ -137,11 +130,23 @@ const userSlice = createSlice({
       })
       .addCase(followUser.fulfilled, (state, action) => {
         state.loading = false;
-        state.users = action.payload;
+        const updatedUser = action.payload;
+        if (state.currentUser && state.currentUser._id === updatedUser._id) {
+          state.currentUser = updatedUser;
+        }
+        state.users = state.users.map(user =>
+          user._id === updatedUser._id ? updatedUser : user
+        );
       })
        .addCase(unfollowUser.fulfilled, (state, action) => {
         state.loading = false;
-        state.users = action.payload;
+        const updatedUser = action.payload;
+        if (state.currentUser && state.currentUser._id === updatedUser._id) {
+          state.currentUser = updatedUser;
+        }
+        state.users = state.users.map(user =>
+          user._id === updatedUser._id ? updatedUser : user
+        );
       })
        .addCase(searchUsers.pending, (state) => {
          state.loading = true;

@@ -195,7 +195,7 @@ useEffect(() => {
               </div>
               {isDropdownOpen && (
                 <div className={`absolute right-0 mt-2 w-48 ${darkMode ? 'bg-secondary-foreground' : 'bg-white'} shadow-lg py-1 rounded-md flex flex-col text-${darkMode ? 'white' : 'black'}`}>
-                  <div className="px-4 py-2 flex items-center gap-3" onClick={navigateToUserProfile}>
+                  <div className={`px-4 py-2 flex items-center gap-3 hover:cursor-pointer ${darkMode ? 'hover:bg-slate-800' : 'hover:bg-slate-100'}`} onClick={navigateToUserProfile}>
                     <FaUser />
                     <span className={`text-${darkMode ? 'white' : 'black'}`}>{userName}</span>
                   </div>

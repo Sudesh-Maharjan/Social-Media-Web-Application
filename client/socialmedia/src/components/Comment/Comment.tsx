@@ -85,7 +85,7 @@ const CommentComponent: React.FC<CommentComponentProps> = ({ postId }) => {
             <p className="text-gray-700 text-sm"><strong>{comment.author.firstName} {comment.author.lastName}</strong></p>
             <p>{comment.comment}</p>
           </div>
-          <div className="">
+          <div className="flex items-center justify-center border ">
             <small className="text-slate-600">{moment(comment.createDate).fromNow()}</small>
             {comment.author._id === userId && (
               <div className="flex mt-2">

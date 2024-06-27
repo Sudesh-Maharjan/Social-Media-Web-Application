@@ -43,8 +43,8 @@ import { RootState } from '../store';
       }
   
       return posts;
-    } catch (error) {
-      throw new Error('Failed to fetch posts');
+    } catch (error: any) {
+     toast.error(error.message || 'Failed to fetch posts');
     }
   });
   
@@ -59,14 +59,14 @@ import { RootState } from '../store';
      });
      toast.success('Post created successfully!')
      return response.data;
-   } catch (error) {
-     toast.error('Failed to create post');
+   } catch (error:any) {
+     toast.error(error.message || 'Failed to create post');
    }
  });
-export const updatePost = createAsyncThunk('posts/updatePost', async ({id, formData}: {id:string, formData: FormData})=> {
+export const updatePost = createAsyncThunk('posts/updatePost', async ({postId, formData}: {postId:string, formData: FormData})=> {
   try {
     const accessToken = getAccessToken();
-    const response = await axios.put<Post[]>(`${API_BASE_URL}/posts/${id}`,  formData,{
+    const response = await axios.put<Post[]>(`${API_BASE_URL}/posts/${postId}`,  formData,{
       headers: {
         Authorization: `Bearer ${accessToken}`,
         'Content-Type': 'multipart/form-data',
@@ -76,21 +76,21 @@ export const updatePost = createAsyncThunk('posts/updatePost', async ({id, formD
     return response.data;
   } catch (error: any) {
     console.error('Error updating post:', error.response ? error.response.data : error.message);
-toast.error('Failed to update post!');    
+toast.error(error.message || 'Failed to update post');    
   }
 })
-export const deletePost = createAsyncThunk('posts/deletePost', async (id: string)=>{
+export const deletePost = createAsyncThunk('posts/deletePost', async (postId: string)=>{
   try {
     const accessToken = getAccessToken();
-    await axios.delete<Post[]>(`${API_BASE_URL}/posts/${id}`,{
+    await axios.delete<Post[]>(`${API_BASE_URL}/posts/${postId}`,{
       headers: {
         Authorization: `Bearer ${accessToken}`
       }
     });
     toast.success('Post deleted successfully!')
-    return id;
-  } catch (error) {
-    toast.error('Failed to delete post!')
+    return postId;
+  } catch (error: any) {
+    toast.error(error.message || 'Failed to delete post')
   }
 })
 export const likePost = createAsyncThunk(
@@ -100,7 +100,7 @@ export const likePost = createAsyncThunk(
     const { userId, accessToken } = state.auth;
     
     if (!userId || !accessToken) {
-      throw new Error('User is not authenticated');
+     toast.error('You must be logged in to like/dislike a post');
     }
 
     // Your API call here
@@ -113,7 +113,7 @@ export const likePost = createAsyncThunk(
     });
 
     if (!response.ok) {
-      throw new Error('Failed to like the post');
+      toast.error('Failed to like/dislike post');
     }
 
     const data = await response.json();

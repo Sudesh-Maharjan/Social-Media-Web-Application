@@ -5,13 +5,14 @@ export interface AppState{
    theme: ThemeState;
 }
 export interface Post {
-_id: number;
+_id: string;
 content: string;
 image: string;
 likes: string;
 userId: string;
 creatorName: string;
 formattedCreateDate: string;
+comments: Comment[];
 }
 export interface User {
   _id: string;
@@ -24,3 +25,12 @@ export interface User {
    following: User[];
    likedPosts: Post[];
 }
+
+export interface Comment {
+   _id: string;
+   postId: string;
+   comment: string;
+   author: User;
+   createDate: string; 
+   updateDate?: string;
+ }

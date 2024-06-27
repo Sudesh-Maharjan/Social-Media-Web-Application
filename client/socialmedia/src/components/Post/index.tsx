@@ -11,7 +11,6 @@ import { RootState, AppDispatch } from "@/redux/store";
 import { Button } from "../ui/button";
 import { FaRegComment } from "react-icons/fa";
 import { IoShareSocial } from "react-icons/io5";
-//shad cn
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,42 +19,42 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Post } from "@/types";
-import ProfileSuggetions from "../ProfileSuggetions";
-import '../../../public/css/styles.css'
+import '../../../public/css/styles.css';
+import CommentComponent from "../Comment/Comment"; 
+import UserSuggestions from "../UserSuggestions/UserSiggestions";
 
 const PostComponent = () => {
   const dispatch: AppDispatch = useDispatch();
-  const { posts, loading, error } = useSelector(
-    (state: RootState) => state.posts
-  );
+  const { posts, loading, error } = useSelector((state: RootState) => state.posts);
   const userId = useSelector((state: RootState) => state.auth.userId);
-  console.log(userId)
+
   const [content, setContent] = useState("");
   const [image, setImage] = useState<File | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [currentPostId, setCurrentPostId] = useState<number | null>(null);
+  const [currentPostId, setCurrentPostId] = useState<string | null>(null);
+  const [showCommentInput, setShowCommentInput] = useState<{ [key: string]: boolean }>({});
+
   const formRef = useRef<HTMLFormElement>(null);
+
   useEffect(() => {
     dispatch(fetchPosts());
   }, [dispatch]);
 
   const handleEdit = (post: Post) => {
-    console.log("Editing post:", post._id);
     setContent(post.content);
     setCurrentPostId(post._id);
     setIsEditing(true);
     setShowForm(true);
     setImage(null);
   };
-  const handleDelete = (_id: number) => {
-    console.log("Deleting post with ID:", _id);
-    dispatch(deletePost(_id));
+
+  const handleDelete = (id: string) => {
+    dispatch(deletePost(id));
   };
 
-  const handleSubmit = async(e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    // console.log("handleSubmit:", { isEditing, currentPostId, content });
 
     const formData = new FormData();
     formData.append("content", content);
@@ -63,28 +62,30 @@ const PostComponent = () => {
     if (image) {
       formData.append("image", image);
     }
-    try{
-    if (isEditing && currentPostId !== null) {
-      // console.log("Updating post with ID:", currentPostId);
-      await dispatch(updatePost({id: currentPostId, formData}));
-    } else {
-      await dispatch(createPost(formData));
+
+    try {
+      if (isEditing && currentPostId !== null) {
+        await dispatch(updatePost({ id: currentPostId, formData }));
+      } else {
+        await dispatch(createPost(formData));
+      }
+      setContent("");
+      setImage(null);
+      setShowForm(false);
+      setIsEditing(false);
+      setCurrentPostId(null);
+    } catch {
+      console.error("Error creating/updating post:", error);
     }
-    setContent("");
-    setImage(null);
-    setShowForm(false);
-    setIsEditing(false);
-    setCurrentPostId(null);
-  }catch{
-    console.error("Error creating/updating post:", error);
-  }
-}
-const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-  const file = e.target.files?.[0];
-  if (file) {
-    setImage(file);
-  }
-};
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setImage(file);
+    }
+  };
+
   const handleOutsideClick = (e: MouseEvent) => {
     if (formRef.current && !formRef.current.contains(e.target as Node)) {
       setShowForm(false);
@@ -92,13 +93,19 @@ const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       setCurrentPostId(null);
     }
   };
- const handleLike = (postId: number) => {
+
+  const handleLike = (postId: string) => {
     if (userId) {
-      dispatch(likePost( postId ));
+      dispatch(likePost(postId));
     } else {
       console.error('User ID is null.');
     }
   };
+
+  const handleCommentClick = (postId: string) => {
+    setShowCommentInput(prev => ({ ...prev, [postId]: !prev[postId] }));
+  };
+
   useEffect(() => {
     document.addEventListener("mousedown", handleOutsideClick);
     return () => {
@@ -108,51 +115,36 @@ const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 
   return (
     <>
-      <div className="border inline-block m-5 p-2 absolute z-10 rounded-lg shadow-md">
-        <div className="flex flex-col gap-5">
-      <ProfileSuggetions/>
-        <Button
-          className="rounded-lg p-4 cursor-pointer"
-          onClick={() => setShowForm(!showForm)}
-          >
-          Post
-        </Button>
-          </div>
+      <div className="border inline-block m-5 p-2 absolute z-10 rounded-lg shadow-md bg-white">
+        <div className="flex flex-col gap-5 ">
+          <UserSuggestions/>
+          <Button className="rounded-lg p-4 cursor-pointer" onClick={() => setShowForm(!showForm)}>
+            Post
+          </Button>
+        </div>
       </div>
-      <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center">
+      <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center bg-slate-100">
         {showForm && (
           <div className="absolute top-0 left-0 w-full h-full bg-gray-800 bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-10">
-            <form
-              ref={formRef}
-              onSubmit={handleSubmit}
-              encType="multipart/form-data" 
-              className="bg-white shadow-md rounded-lg p-8 w-96"
-            >
+            <form ref={formRef} onSubmit={handleSubmit} encType="multipart/form-data" className="bg-white shadow-md rounded-lg p-8 w-96">
               <textarea
-                placeholder="Whats n your mind?"
+                placeholder="What's on your mind?"
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
                 className="w-full px-3 py-2 border rounded-lg mb-3 focus:outline-none focus:border-blue-500"
                 rows={4}
               ></textarea>
-                {isEditing && currentPostId !== null && (
-    <div className="mb-3">
-      <img
-        src={posts.find((post) => post._id === currentPostId)?.image || ""}
-        alt="Previous Image"
-        className="w-full h-auto mt-2"
-      />
-    </div>
-  )}
-                <input
-                type="file"
-                onChange={handleFileChange}
-                className="mb-3"
-              />
-              <Button
-                type="submit"
-                className=" text-white px-4 py-2 rounded-lg transition duration-200"
-              >
+              {isEditing && currentPostId !== null && (
+                <div className="mb-3">
+                  <img
+                    src={posts.find((post) => post._id === currentPostId)?.image || ""}
+                    alt="Previous Image"
+                    className="w-full h-auto mt-2"
+                  />
+                </div>
+              )}
+              <input type="file" onChange={handleFileChange} className="mb-3" />
+              <Button type="submit" className="text-white px-4 py-2 rounded-lg transition duration-200">
                 {isEditing ? "Update Post" : "Create Post"}
               </Button>
             </form>
@@ -161,13 +153,12 @@ const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 
         {loading && <p className="mt-4 text-center">Loading...</p>}
         {error && <p className="mt-4 text-center text-red-500">{error}</p>}
-
-        <div className="mt-4 w-[600px] scrollable-container" style={{ maxHeight: "600px" }}>
+        <div className="">
+<h1 className="font-bold text-xl">Posts</h1>
+        <div className="mt-4 w-[680px] scrollable-container border-x-2 px-4" style={{ maxHeight: "600px" }}>
           {posts.map((post) => (
-            <div
-              key={post._id}
-              className="bg-white shadow-md rounded-lg p-4 mb-4 relative"
-            >
+            <div key={post._id} className="bg-white rounded-lg p-4 mb-4">
+              <div className="border p-3 rounded-md shadow-md relative">
               <div className="absolute top-1 right-3">
                 <DropdownMenu>
                   <DropdownMenuTrigger>•••</DropdownMenuTrigger>
@@ -183,22 +174,18 @@ const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                 </DropdownMenu>
               </div>
               <div className="flex flex-col">
-                  <h4 className="text-sm font-semibold">{post.creatorName}</h4>
-                  <small className="text-gray-500">
-                    {post.formattedCreateDate}
-                  </small>
-                </div>
+                <h4 className="text-sm font-semibold">{post.creatorName}</h4>
+                <small className="text-gray-500">{post.formattedCreateDate}</small>
+              </div>
               <p className="text-gray-700">{post.content}</p>
-              {
-              post.image && (
-                
-                     <img src={`${post.image}`} alt="Post" className="w-full h-auto mt-2" />
-                   )}
+              {post.image && (
+                <img src={`${post.image}`} alt="Post" className="w-full h-[600px] mt-2 object-cover" />
+              )}
               <div className="flex justify-between mt-4">
-              <button onClick={() => handleLike(post._id)}>
-  {userId && post.likes.includes(userId) ? 'Unlike' : 'Like'} ({post.likes.length})
-</button>
-                <button className="text-gray-600 hover:text-gray-800 flex items-center">
+                <button onClick={() => handleLike(post._id)}>
+                  {userId && post.likes.includes(userId) ? 'Unlike' : 'Like'} ({post.likes.length})
+                </button>
+                <button className="text-gray-600 hover:text-gray-800 flex items-center hover:bg-slate-100 p-2 transition duration-300 rounded-md" onClick={() => handleCommentClick(post._id)}>
                   <FaRegComment className="mx-1" />
                   Comment
                 </button>
@@ -207,8 +194,13 @@ const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                   Share
                 </button>
               </div>
+              </div>
+              {showCommentInput[post._id] && (
+                <CommentComponent postId={post._id} comments={post.comments} />
+              )}
             </div>
           ))}
+        </div>
         </div>
       </div>
     </>

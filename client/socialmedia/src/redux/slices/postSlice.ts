@@ -22,19 +22,32 @@ import { RootState } from '../store';
   }
   
   export const fetchPosts = createAsyncThunk('posts/fetchPosts', async () => {
-    // console.log('Id:', id)
     try {
       const accessToken = getAccessToken();
-     const response = await axios.get<Post[]>(`${API_BASE_URL}/posts`,{
-      headers: {
-         Authorization: `Bearer ${accessToken}`,
+      const response = await axios.get<Post[]>(`${API_BASE_URL}/posts`, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+  
+      const posts = response.data;
+  
+      // Fetch comments for each post
+      for (const post of posts) {
+        const commentsResponse = await axios.get(`${API_BASE_URL}/comments/${post._id}/comments`, {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        });
+        post.comments = commentsResponse.data;
       }
-     });
-     return response.data; 
-   } catch (error) {
-     throw Error('Failed to fetch posts'); // Throw error for async thunk
-   }
- });
+  
+      return posts;
+    } catch (error) {
+      throw new Error('Failed to fetch posts');
+    }
+  });
+  
 
  export const createPost = createAsyncThunk('posts/createPost',  async (formData: FormData)  => {
    try {
@@ -50,7 +63,7 @@ import { RootState } from '../store';
      toast.error('Failed to create post');
    }
  });
-export const updatePost = createAsyncThunk('posts/updatePost', async ({id, formData}: {id:number, formData: FormData})=> {
+export const updatePost = createAsyncThunk('posts/updatePost', async ({id, formData}: {id:string, formData: FormData})=> {
   try {
     const accessToken = getAccessToken();
     const response = await axios.put<Post[]>(`${API_BASE_URL}/posts/${id}`,  formData,{
@@ -66,7 +79,7 @@ export const updatePost = createAsyncThunk('posts/updatePost', async ({id, formD
 toast.error('Failed to update post!');    
   }
 })
-export const deletePost = createAsyncThunk('posts/deletePost', async (id: number)=>{
+export const deletePost = createAsyncThunk('posts/deletePost', async (id: string)=>{
   try {
     const accessToken = getAccessToken();
     await axios.delete<Post[]>(`${API_BASE_URL}/posts/${id}`,{
@@ -120,9 +133,8 @@ const postSlice = createSlice({
         state.error = null;
       })
       .addCase(fetchPosts.fulfilled, (state, action) => {
-        state.posts = action.payload;
         state.loading = false;
-        state.error = null;
+        state.posts = action.payload ?? [];
       })
       .addCase(fetchPosts.rejected, (state, action) => {
         state.loading = false;
@@ -147,9 +159,9 @@ const postSlice = createSlice({
         state.error = null;
       })
       .addCase(updatePost.fulfilled, (state, action) => {
-        const index = state.posts.findIndex(post => post._id === action.payload._id);
+        const index = state.posts.findIndex(post => post._id === action.payload?.[0]._id);
         if (index !== -1) {
-          state.posts[index] = action.payload;
+          state.posts[index] = action.payload?.[0];
         }
         state.loading = false;
         state.error = null;

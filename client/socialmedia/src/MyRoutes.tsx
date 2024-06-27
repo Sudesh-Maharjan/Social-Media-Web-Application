@@ -5,7 +5,7 @@ import Login from "./pages/Login/Login";
 import Home from "./pages/Home/Home";
 import Protected from "./Auth/ProtectedRoutes";
 import ResetPassword from "./pages/ResetPassword/ResetPassword";
-import FollowUnfollow from "./pages/UserSuggestions/UserSiggestions";
+import FollowUnfollow from "./components/UserSuggestions/UserSiggestions";
 import UserProfile from "./pages/UserProfile/UserProfile";
 const MyRoutes = () => {
   return (

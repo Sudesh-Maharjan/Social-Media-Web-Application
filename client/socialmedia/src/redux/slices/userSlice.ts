@@ -53,7 +53,7 @@ headers:{
 
 
 });
-export const followUser = createAsyncThunk('users/followUser', async (userIdToFollow: string) => {
+export const followUser = createAsyncThunk('users/followUser', async (userIdToFollow: string, {getState}) => {
    try {
       const accessToken = getAccessToken();
      const response = await axios.post(`${API_BASE_URL}/users/follow`, { userIdToFollow }, {
@@ -61,7 +61,13 @@ export const followUser = createAsyncThunk('users/followUser', async (userIdToFo
          Authorization: `Bearer ${accessToken}`
        }
      });
-     return response.data;
+     const updatedUser = response.data;  // Assuming the backend returns the updated user
+     const state = getState() as RootState;
+     const updatedUsers = state.users.users.map(user =>
+       user._id === updatedUser._id ? { ...user, isFollowing: true } : user
+     );
+ 
+     return updatedUsers;
    } catch (error) {
       throw (error as Error).message;
    }
@@ -83,7 +89,7 @@ export const followUser = createAsyncThunk('users/followUser', async (userIdToFo
    }
  );
  
- export const unfollowUser = createAsyncThunk('users/unfollowUser', async (userIdToUnfollow: string) => {
+ export const unfollowUser = createAsyncThunk('users/unfollowUser', async (userIdToUnfollow: string, {getState}) => {
    try {
       const accessToken = getAccessToken();
 
@@ -92,7 +98,13 @@ export const followUser = createAsyncThunk('users/followUser', async (userIdToFo
          Authorization: `Bearer ${accessToken}`
        }
      });
-     return response.data;
+     const updatedUser = response.data; 
+     const state = getState() as RootState;
+     const updatedUsers = state.users.users.map(user =>
+       user._id === updatedUser._id ? { ...updatedUser, isFollowing: false } : user
+     );
+ 
+     return updatedUsers;
    } catch (error) {
       throw (error as Error).message;
    }
@@ -124,17 +136,13 @@ const userSlice = createSlice({
         state.error = action.payload as string;
       })
       .addCase(followUser.fulfilled, (state, action) => {
-         const user = action.payload;
-         state.users = state.users.map((u) =>
-           u._id === user._id ? { ...u, isFollowing: true } : u
-         );
-       })
+        state.loading = false;
+        state.users = action.payload;
+      })
        .addCase(unfollowUser.fulfilled, (state, action) => {
-         const user = action.payload;
-         state.users = state.users.map((u) =>
-           u._id === user._id ? { ...u, isFollowing: false } : u
-         );
-       })
+        state.loading = false;
+        state.users = action.payload;
+      })
        .addCase(searchUsers.pending, (state) => {
          state.loading = true;
          state.error = null;

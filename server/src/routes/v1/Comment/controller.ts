@@ -14,7 +14,8 @@ export const addComment = async (req: Request, res: Response) => {
   }
 
   try {
-    const newComment = await Comment.create({ postId, comment, author });
+    let newComment = await Comment.create({ postId, comment, author });
+    newComment =await newComment.populate('author', 'firstName lastName');
     await Post.findByIdAndUpdate(postId, { $push: { comments: newComment._id } });
     res.status(StatusCodes.CREATED).json(newComment);
   } catch (error) {
@@ -59,6 +60,8 @@ export const updateComment = async (req: Request, res: Response) => {
     commentToUpdate.comment = comment;
     commentToUpdate.updateDate = new Date();
     await commentToUpdate.save();
+
+    await commentToUpdate.populate('author', 'firstName lastName');
     res.json(commentToUpdate);
   } catch (error: any) {
     console.error("Error updating comment:", error);
@@ -74,7 +77,7 @@ export const deleteComment = async (req: Request, res: Response) => {
       if (!mongoose.Types.ObjectId.isValid(postId) || !mongoose.Types.ObjectId.isValid(commentId)) {
         return res.status(StatusCodes.BAD_REQUEST).send("Invalid postId or commentId");
       }
-    const comment = await Comment.findById(commentId);
+    const comment = await Comment.findById(commentId).populate('author', 'firstName lastName');
     if (!comment) {
       return res.status(StatusCodes.NOT_FOUND).send("Comment not found");
     }

@@ -124,7 +124,7 @@ const commentSlice = createSlice({
         state.loading = false;
         const newComment = action.payload;
         const { postId } = newComment;
-        state.comments[postId] = state.comments[postId]
+        state.comments[postId] = state.comments[postId]//updates the comment for specific postId. Also check if there are existing comments for the post and appends them also with new comment
           ? [...state.comments[postId], newComment]
           : [newComment];
       })
@@ -155,15 +155,10 @@ const commentSlice = createSlice({
         state.loading = true;
         state.error = null;
       })
-      .addCase(deleteComment.fulfilled, (state, action: PayloadAction<string>) => {
+      .addCase(deleteComment.fulfilled, (state, action: PayloadAction<{ postId: string; commentId: string }>) => {
         state.loading = false;
-        const deletedCommentId = action.payload;
-        const postId = Object.keys(state.comments).find(postId =>
-          state.comments[postId].some(comment => comment._id === deletedCommentId)
-        );
-        if (postId) {
-          state.comments[postId] = state.comments[postId].filter(comment => comment._id !== deletedCommentId);
-        }
+        const { postId, commentId } = action.payload;
+        state.comments[postId] = state.comments[postId].filter(comment => comment._id !== commentId);
       })
       .addCase(deleteComment.rejected, (state, action) => {
         state.loading = false;

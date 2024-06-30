@@ -13,7 +13,6 @@ import { RxCross2 } from "react-icons/rx";
 import { FaCheck } from "react-icons/fa6";
 interface CommentComponentProps {
   postId: string;
-  comments: Comment[];
 }
 
 const CommentComponent: React.FC<CommentComponentProps> = ({ postId }) => {

@@ -14,17 +14,16 @@ import { IoIosChatboxes } from "react-icons/io";
 import { RiSearchLine } from 'react-icons/ri';
 import '../../../public/css/styles.css';
 import socket from '@/socket';
-import { AppDispatch } from '@/redux/store';
+import { AppDispatch, RootState } from '@/redux/store';
 import { searchUsers , selectUsers} from '@/redux/slices/userSlice';
 import { User } from '@/types';
-
+import { fetchNotifications , deleteNotification} from '@/redux/slices/notificationSlice';
 
 const Index = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [userName, setUserName] = useState('');
-  const [notifications, setNotifications] = useState<string[]>([]);
 
   const darkMode = useSelector((state: AppState) => state.theme.darkMode);
   const users = useSelector(selectUsers);
@@ -38,17 +37,27 @@ const Index = () => {
   const [searchResultsVisible, setSearchResultsVisible] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
-
+const notifications =useSelector((state: RootState) => state.notifications.notifications);
+// const recipient = useSelector((state: RootState) => state.auth.userId);
+const userId = localStorage.getItem('userId');
   useEffect(() => {
-    socket.on('notification', (data: any) => {
-      setNotifications((prevNotifications) => [data.message, ...prevNotifications]);
+    if (userId) {
+      dispatch(fetchNotifications(userId));
+
+      socket.emit('storeSocketId', userId);
+    socket.on('notification', (data) => {
+      const { recipientId } = data;
+      if (recipientId === userId) {
+        dispatch(fetchNotifications(recipientId));
+      }
     });
 
     return () => {
       socket.off('notification');
     };
-  }, []);
-  console.log(notifications)
+  }
+  }, [userId, dispatch]);
+
   useEffect(()=>{
    const handleClickOutside = (event: MouseEvent)=>{
       if(dropdownRef.current && !dropdownRef.current.contains(event.target as Node)){
@@ -78,19 +87,14 @@ useEffect(() => {
   }
     }, []);
 
-// Navbar dropdown
-  const toggleDropdown = () => {
-    setIsDropdownOpen(!isDropdownOpen);
-  };
-  const toggleNotification = () => {
-    setIsNotificationOpen(!isNotificationOpen);
-  };
-  const toggleChat = () => {
-    setIsChatOpen(!isChatOpen);
-  };
-  const toggleSearch = () => {
-    setIsSearchOpen(!isSearchOpen);
-  };
+
+  useEffect(() => {
+    if (userId) {
+      dispatch(fetchNotifications(userId));
+    } else {
+      console.error("User ID not found in localStorage");
+    }
+  }, [dispatch ,userId]);
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(event.target.value);
@@ -111,17 +115,18 @@ useEffect(() => {
   //aruko
   const handleUserSelect = (user: User) => {
     setIsSearchOpen(false);
-    console.log('Clicked user:', user._id)
     navigate(`/profile/${user._id}`);
   };
   //afnai
   const navigateToUserProfile = () => {
     const userData = localStorage.getItem('User_data');
-    console.log(userData)
     if (userData) {
       const user = JSON.parse(userData);
       navigate(`/profile/${user.id}`);
     }
+  };
+  const handleDeleteNotification = (notificationId: string) => {
+    dispatch(deleteNotification(notificationId));
   };
   return (
    <nav className={`sticky z-10 border border-b-1 border-b-black ${darkMode ? 'bg-secondary-foreground' : 'bg-white'}`}>
@@ -150,7 +155,7 @@ useEffect(() => {
           onChange={handleSearchChange}
         />
         <button
-          onClick={toggleSearch}
+          onClick={() => setIsSearchOpen(!isSearchOpen)}
           className={`rounded-full bg-slate-200 p-2 text-secondary-foreground hover:bg-slate-300 transition duration-200 ${
             isSearchOpen ? 'hidden' : 'block'
           }`}
@@ -175,16 +180,16 @@ useEffect(() => {
                 </div>
               )}
 </div>
-        <button className='rounded-full bg-slate-200 p-2 text-secondary-foreground hover:bg-slate-300 transition duration-200'>
-        <IoIosChatboxes onClick={toggleChat} className='text-2xl'/>
-        </button>
-        <button onClick={toggleNotification} className='rounded-full bg-slate-200 p-2 text-secondary-foreground hover:bg-slate-300 transition duration-200'>
-        <IoIosNotifications className='text-2xl'/>
-        </button>
-              <button
-                className="flex text-white items-center focus:outline-none "
-                onClick={toggleDropdown}
-              >
+<button className='rounded-full bg-slate-200 p-2 text-secondary-foreground hover:bg-slate-300 transition duration-200'>
+                  <IoIosChatboxes onClick={() => setIsChatOpen(!isChatOpen)} className='text-2xl'/>
+                </button>
+                <button onClick={() => setIsNotificationOpen(!isNotificationOpen)} className='rounded-full bg-slate-200 p-2 text-secondary-foreground hover:bg-slate-300 transition duration-200'>
+                  <IoIosNotifications className='text-2xl'/>
+                </button>
+                <button
+                  className="flex text-white items-center focus:outline-none "
+                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                >
                 <img
                   className="h-8 w-8 rounded-full object-cover"
                   src="https://randomuser.me/api/portraits/women/68.jpg"
@@ -222,16 +227,30 @@ useEffect(() => {
                 </div>
               )}
                {isNotificationOpen && (
-                <div ref={notificationRef} className={`absolute right-0 mt-2 w-96 ${darkMode ? 'bg-secondary-foreground' : 'bg-white'} shadow-lg py-1  rounded-md flex flex-col text-${darkMode ? 'white' : 'black'}`} >
-                  <div className="px-4 py-2 scrollable-container" style={{ maxHeight: "600px" }}>
-                    <h4 className="font-semibold">Notifications</h4>
-                    <div className="mt-2 " >
-                      {notifications.map((notification, index) => (
-                      <p key={index} className='hover:bg-slate-200 cursor-pointer transition duration-150 p-2 rounded-md '>{notification}</p>
-                      ))}
+        <div className="absolute right-0 mt-2 w-80 bg-white border border-black rounded-lg shadow-lg overflow-hidden z-20" ref={notificationRef}>
+          <div className={`flex items-center justify-between px-4 py-2 ${darkMode ? 'bg-black text-white' : 'bg-white text-black' }`}>
+            <h2 className="text-lg">Notifications</h2>
+            <button className="focus:outline-none" onClick={() => setIsNotificationOpen(false)}>
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+            </button>
+          </div>
+          <div className="divide-y divide-gray-300">
+            {notifications.length > 0 ? (
+              notifications.map(notification => (
+                <div key={notification._id} className={`px-4 py-3 cursor-pointer hover:bg-gray-100 ${darkMode ? 'bg-black text-white' : 'bg-white text-black'}`}>
+                  <p className={`text-sm ${darkMode ? 'text-white' : 'text-black'}`}>{notification.message}</p>
+                  <button onClick={() => handleDeleteNotification(notification._id)} className="text-xs text-gray-500 hover:text-red-500 focus:outline-none">
+                    Delete
+                  </button>
+                </div>
+              ))
+            ) : (
+              <p className="px-4 py-3 text-sm">No notifications</p>
+            )}
                     </div>
                   </div>
-                </div>
               )}
                {isChatOpen && (
                 <div ref={chatRef} className={`absolute right-0 mt-2 w-72 ${darkMode ? 'bg-secondary-foreground' : 'bg-white'} shadow-lg py-1 rounded-md flex flex-col text-${darkMode ? 'white' : 'black'}`}>

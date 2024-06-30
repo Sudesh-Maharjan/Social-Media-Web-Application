@@ -22,14 +22,17 @@ import { Post } from "@/types";
 import '../../../public/css/styles.css';
 import CommentComponent from "../Comment/Comment"; 
 import UserSuggestions from "../UserSuggestions/UserSiggestions";
+import { useNavigate } from "react-router-dom";
 
 const PostComponent = () => {
   const dispatch: AppDispatch = useDispatch();
+  const navigate = useNavigate();
   const { posts, loading, error } = useSelector((state: RootState) => state.posts);
   const userId = useSelector((state: RootState) => state.auth.userId);
 
   const [content, setContent] = useState("");
   const [image, setImage] = useState<File | null>(null);
+  //create post or update post form
   const [showForm, setShowForm] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [currentPostId, setCurrentPostId] = useState<string | null>(null);
@@ -55,7 +58,6 @@ const PostComponent = () => {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-
     const formData = new FormData();
     formData.append("content", content);
     formData.append("status", "published");
@@ -103,7 +105,7 @@ const PostComponent = () => {
   };
 
   const handleCommentClick = (postId: string) => {
-    setShowCommentInput(prev => ({ ...prev, [postId]: !prev[postId] }));
+    setShowCommentInput(prev => ({ ...prev, [postId]: !prev[postId] })); //gets the previous state of comment input open or close then toggles opposite to that input
   };
 
   useEffect(() => {
@@ -113,6 +115,9 @@ const PostComponent = () => {
     };
   }, []);
 
+  const handlePhotoClick = (postId: string) => {
+    navigate(`/posts/${postId}`);
+  }
   return (
     <>
       <div className="border inline-block m-5 p-2 absolute z-10 rounded-lg shadow-md bg-white">
@@ -179,7 +184,7 @@ const PostComponent = () => {
               </div>
               <p className="text-gray-700">{post.content}</p>
               {post.image && (
-                <img src={`${post.image}`} alt="Post" className="w-full h-[600px] mt-2 object-cover" />
+                <img src={`${post.image}`} alt="Post" className="w-full h-[600px] mt-2 object-cover cursor-pointer" onClick={() => handlePhotoClick(post._id)} />
               )}
               <div className="flex justify-between mt-4">
                 <button onClick={() => handleLike(post._id)}>

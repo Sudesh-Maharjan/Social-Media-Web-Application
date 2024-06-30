@@ -4,6 +4,10 @@ import bcrypt from 'bcryptjs';
 import jwt, { Secret } from 'jsonwebtoken';
 import { sendOtpEmail, sendPasswordResetEmail } from './service';
 import mongoose from 'mongoose';
+import upload from '../../../Middleware/uploadMiddleware';
+import multer from 'multer';
+import fs from 'fs';
+import Notification from '../Notification/model'
 interface AuthenticatedRequest extends Request {
   user?: { id: string };
 }
@@ -247,33 +251,42 @@ export const followUser = async (req: AuthenticatedRequest, res: Response) => {
     return res.status(400).send('Invalid user ID format');
   }
   try {
-    const user = await User.findById(userId);
     const userToFollow = await User.findById(userIdToFollow);
+    const currentUser = await User.findById(userId);
 
-    if(!user || !userToFollow){
+    if(!userToFollow || !currentUser){
       return res.status(404).send('User not found');
     }
-    if(user.following.includes(userIdToFollow)){
+    if(currentUser.following.includes(userIdToFollow)){
       return res.status(400).send('Already following the user');
     }
 
-    user.following.push(new mongoose.Types.ObjectId(userIdToFollow));
+    currentUser.following.push(userIdToFollow);
     userToFollow.followers.push(new mongoose.Types.ObjectId(userId));
 
-    await user.save();
+    await currentUser.save();
     await userToFollow.save();
+    
+    const notificationMessage = `${currentUser.firstName} ${currentUser.lastName} started following you.`;
+    const newNotification = new Notification({
+      recipient: userIdToFollow,
+      message: notificationMessage,
+      type: 'follow',
+    });
 
-    //realtime socket event notitfication
+    await newNotification.save();
+
     const io = req.app.get('socketio');
     if (!io) {
       throw new Error('Socket.io instance not found');
     }
-    //koslai pathaune .to, k pathaune: message
-    io.emit('notification', {
-      message: `${user.firstName} ${user.lastName} has started following you.`,
+      io.to(userToFollow.socketID).emit('notification', {
+      recipientId: userIdToFollow,
+      message: notificationMessage,
+      type: 'follow',
     });
 
-    res.status(200).send('Followed successfully!');
+    res.status(200).json(currentUser);
   }catch(error: any){
     console.error('Error following user:', error.message); 
     console.error(error.stack); 
@@ -306,3 +319,62 @@ export const unfollowUser = async (req: AuthenticatedRequest, res: Response) =>{
     res.status(500).send('Internal Server Error');
   }
 }
+
+export const uploadProfilePicture = async (req: AuthenticatedRequest, res: Response) => {
+try {
+  upload.single('file')(req, res, async function (err){
+    if(err instanceof multer.MulterError) {
+      console.error('Multer error:', err);
+      return res.status(500).json({message: 'Multer error', error: err});
+    }else if(err){
+      console.error('Error uploading file:', err);
+      return res.status(500).json({message: 'Error uploading file', error: err});
+    }
+
+    const file = req.file;
+    if(!file){
+      return res.status(400).json({message: 'No file uploaded'});
+    }
+
+    const userId = req.user?.id;
+    const filePath = file.path;
+
+    await User.findByIdAndUpdate(userId, { profilePicture: filePath });
+
+    res.status(200).json({message: 'Profile picture uploaded successfully', filePath});
+  })
+} catch (error: any) {
+  console.error('Error uploading profile picture:', error);
+  res.status(500).json({ message: 'Failed to upload profile picture', error: error.message})
+}
+}
+export const deleteProfilePicture = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const userId = req.user?.id;
+
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Extract profile picture path from user document
+    const profilePicturePath = user.profilePicture;
+
+    if (!profilePicturePath) {
+      return res.status(400).json({ message: 'No profile picture to delete' });
+    }
+
+    // Delete file from storage (assuming local file system)
+    fs.unlinkSync(profilePicturePath);
+
+    // Update user document to clear profile picture field
+    user.profilePicture = undefined;
+    await user.save();
+
+    res.status(200).json({ message: 'Profile picture deleted successfully' });
+  } catch (error: any) {
+    console.error('Error deleting profile picture:', error);
+    res.status(500).json({ message: 'Failed to delete profile picture', error: error.message });
+  }
+};

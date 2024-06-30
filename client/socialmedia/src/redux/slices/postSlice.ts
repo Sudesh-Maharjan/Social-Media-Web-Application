@@ -20,7 +20,22 @@ import { RootState } from '../store';
  const getAccessToken = () => {
    return localStorage.getItem('accessToken');
   }
-  
+
+  export const fetchPostDetails = createAsyncThunk( 'posts/fetchPostDetails', async (postId: string) => {
+    try {
+      const accessToken = getAccessToken();
+      const response = await axios.get<Post[]>(`${API_BASE_URL}/posts/${postId}`, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        }
+      });
+      const postDetails = response.data;
+      console.log('Post Details:',postDetails);
+      return postDetails;
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to fetch post details')
+    }
+  })
   export const fetchPosts = createAsyncThunk('posts/fetchPosts', async () => {
     try {
       const accessToken = getAccessToken();
@@ -72,6 +87,7 @@ export const updatePost = createAsyncThunk('posts/updatePost', async ({postId, f
         'Content-Type': 'multipart/form-data',
       }
     });
+    console.log("update post:", response.data)
     toast.success('Post updated successfully!');
     return response.data;
   } catch (error: any) {
@@ -146,7 +162,10 @@ const postSlice = createSlice({
         state.error = null;
       })
       .addCase(createPost.fulfilled, (state, action) => {
-        state.posts.push(action.payload);
+        const newPost = action.payload;
+        if (newPost) {
+          state.posts.push(newPost);
+        }
         state.loading = false;
         state.error = null;
       })
@@ -159,9 +178,10 @@ const postSlice = createSlice({
         state.error = null;
       })
       .addCase(updatePost.fulfilled, (state, action) => {
-        const index = state.posts.findIndex(post => post._id === action.payload?.[0]._id);
-        if (index !== -1) {
-          state.posts[index] = action.payload?.[0];
+        const updatedPost = action.payload as Post | undefined;
+        const index = state.posts.findIndex((post) => post._id === updatedPost?._id);
+        if (index !== -1 && updatedPost) {
+          state.posts[index] = updatedPost;
         }
         state.loading = false;
         state.error = null;

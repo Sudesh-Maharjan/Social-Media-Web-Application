@@ -34,3 +34,12 @@ export interface Comment {
    createDate: string; 
    updateDate?: string;
  }
+
+ export interface Notification {
+   _id: string;
+   recipient: string;
+   message: string;
+   type: string;
+   createdAt: string;
+   read: boolean;
+ }

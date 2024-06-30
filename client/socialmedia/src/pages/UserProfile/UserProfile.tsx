@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   fetchUserDetails,
@@ -14,6 +14,8 @@ import { MdOutlineMail, MdOutlineVerified } from "react-icons/md";
 import "../../../public/css/styles.css";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { selectProfilePictureUrl, uploadProfilePicture } from "@/redux/slices/profileSlice";
+import socket from "@/socket";
 const ProfilePage: React.FC = React.memo(() => {
   const dispatch: AppDispatch = useDispatch();
   const navigate = useNavigate();
@@ -22,6 +24,8 @@ const ProfilePage: React.FC = React.memo(() => {
   const currentUser = useSelector<RootState, User | null>(selectCurrentUser);
   //putting logged in users id in state for conditional rendering of profile page.
   const [loggedInUserId, setLoggedInUserId] = React.useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const profilePictureUrl = useSelector<RootState, string | null>(selectProfilePictureUrl);
   useEffect(() => {
     const userData = localStorage.getItem("userId");
     console.log(userData)
@@ -42,16 +46,28 @@ const ProfilePage: React.FC = React.memo(() => {
     }
   }, [dispatch, userId, loggedInUserId, navigate]);
 
+  const handleUploadPicture = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const formData = new FormData();
+      formData.append("profilePicture", file);
+      dispatch(uploadProfilePicture(formData));
+    }
+  };
+
+  // const handleDeletePicture = () => {
+  //   dispatch(deleteProfilePicture());
+  // };
+
   const handleFollow = () => {
     if (currentUser && loggedInUserId) {
-      dispatch(followUser(currentUser._id)).then(() => {
-      });
+      dispatch(followUser(currentUser._id)).unwrap();
     }
   };
   
   const handleUnfollow = () => {
     if (currentUser && loggedInUserId) {
-      dispatch(unfollowUser(currentUser._id));
+      dispatch(unfollowUser(currentUser._id)).unwrap();
     }
   };
  
@@ -79,7 +95,31 @@ const ProfilePage: React.FC = React.memo(() => {
       <div className="min-h-screen p-6">
         <div className="max-w-4xl mx-auto bg-gray-800 p-8 rounded-lg shadow-md">
           <div className="text-center mb-8 flex justify-center flex-col items-center">
-            <div className="rounded-full w-56 h-56 bg-slate-300 hover:cursor-pointer hover:opacity-85"></div>
+          <div 
+              className="rounded-full w-56 h-56 bg-slate-300 hover:cursor-pointer hover:opacity-85 flex justify-center items-center"
+              onClick={() => {
+                if (fileInputRef.current) {
+                  console.log("File input ref is not null");
+                  fileInputRef.current.click();
+                } else {
+                  console.log("File input ref is null");
+                }
+              }}
+            >
+              {profilePictureUrl ? (
+                <img src={profilePictureUrl} alt="Profile" className="w-full h-full object-cover rounded-full" />
+              ) : (
+                "Upload a Photo"
+              )}
+            </div>
+              <input
+                type="file"
+                id="upload-photo"
+                accept="image/*"
+                ref={fileInputRef}
+                onChange={handleUploadPicture}
+                className="hidden"
+              />
             <h1 className="text-3xl font-bold mt-7 mb-2">{`${currentUser.firstName} ${currentUser.lastName}`}</h1>
             {!isOwnProfile && (
               <div className="mt-4">

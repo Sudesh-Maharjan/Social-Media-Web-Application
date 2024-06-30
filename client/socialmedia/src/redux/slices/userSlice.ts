@@ -131,22 +131,32 @@ const userSlice = createSlice({
       .addCase(followUser.fulfilled, (state, action) => {
         state.loading = false;
         const updatedUser = action.payload;
+        state.users = state.users.map((user) =>
+          user._id === updatedUser._id ? updatedUser : user
+        );
+        // Update the currentUser if it matches the followed user
         if (state.currentUser && state.currentUser._id === updatedUser._id) {
           state.currentUser = updatedUser;
         }
-        state.users = state.users.map(user =>
-          user._id === updatedUser._id ? updatedUser : user
-        );
+        if (state.currentUser) {
+          state.currentUser.following.push(updatedUser);
+        }
       })
        .addCase(unfollowUser.fulfilled, (state, action) => {
         state.loading = false;
         const updatedUser = action.payload;
+        state.users = state.users.map((user) =>
+          user._id === updatedUser._id ? updatedUser : user
+        );
+        // Update the currentUser if it matches the unfollowed user
         if (state.currentUser && state.currentUser._id === updatedUser._id) {
           state.currentUser = updatedUser;
         }
-        state.users = state.users.map(user =>
-          user._id === updatedUser._id ? updatedUser : user
-        );
+        if (state.currentUser) {
+          state.currentUser.following = state.currentUser.following.filter(
+            (followedUser) => followedUser._id !== updatedUser._id
+          );
+        }
       })
        .addCase(searchUsers.pending, (state) => {
          state.loading = true;

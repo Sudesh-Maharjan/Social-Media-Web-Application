@@ -16,6 +16,8 @@ interface User {
   sharedPosts: mongoose.Types.ObjectId[];
   following: mongoose.Types.ObjectId[];
   followers: mongoose.Types.ObjectId[];
+  profilePicture?: string;
+  socketID: string | null;
 }
 
 const userSchema: Schema = new Schema({
@@ -84,6 +86,11 @@ const userSchema: Schema = new Schema({
       ref: "User",
     },
   ],
+  profilePicture: {type: String},
+  socketID: {
+    type: String,
+    default: null,
+},
 });
 
 const User = mongoose.model<User>("User", userSchema);

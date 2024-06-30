@@ -7,16 +7,12 @@ import Protected from "./Auth/ProtectedRoutes";
 import ResetPassword from "./pages/ResetPassword/ResetPassword";
 import FollowUnfollow from "./components/UserSuggestions/UserSiggestions";
 import UserProfile from "./pages/UserProfile/UserProfile";
+import PostDetails from "./pages/PostDetails/PostDetails";
 const MyRoutes = () => {
   return (
     <Router>
       <Routes>
-      <Route
-            path="/followunfollow"
-            element={
-                <FollowUnfollow />
-            }
-          />
+     
         <Route path="/register" element={<Register />} />
         <Route path="/resetpassword" element={<ResetPassword />} />
         <Route path="/" element={<Login />} />
@@ -30,6 +26,18 @@ const MyRoutes = () => {
           />
           
             <Route path="/profile/:userId" element={<UserProfile />} />
+            <Route
+            path="/followunfollow"
+            element={
+                <FollowUnfollow />
+            }
+          />
+           <Route
+            path="/posts/:postId"
+            element={
+              <PostDetails />
+            }
+          />
         </Route>
       </Routes>
     </Router>

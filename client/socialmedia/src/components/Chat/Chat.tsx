@@ -11,15 +11,13 @@ const Chat = () => {
     message: string;
     senderId: string;
     type: string;
-    recipientId?: string;
-    groupId?: string;
+    roomId?: string;
   }[]>([]);
   const [userId, setUserId] = useState<string>("");
   const [typingUsers, setTypingUsers] = useState<string[]>([]);
-  const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
-  const [chatType, setChatType] = useState<string>("public"); // 'public', 'private', 'group'
-  const [startChat, setStartChat] = useState<boolean>(false);
-  const [groupId, setGroupId] = useState<string>("");
+  const [selectedUser, setSelectedUser] = useState<string>("");
+  const [chatStarted, setChatStarted] = useState<boolean>(false);
+  const [roomId, setRoomId] = useState<string>("");
   const dispatch = useDispatch();
   const users = useSelector(selectUsers);
 
@@ -30,15 +28,17 @@ const Chat = () => {
   useEffect(() => {
     socket.on("connect", () => {
       setUserId(socket.id || "");
+      console.log('Socket ID', userId)
     });
 
     socket.on("message", (newMessage: {
       message: string;
       senderId: string;
       type: string;
-      recipientId?: string;
-      groupId?: string;
+      roomId?: string;
     }) => {
+      console.log("Sender ID:", newMessage.senderId);
+      console.log('Type:', newMessage.type);
       setMessages((prevMessages) => [...prevMessages, newMessage]);
     });
 
@@ -54,46 +54,27 @@ const Chat = () => {
         }, 2000);
       }
     });
-    socket.on('openChat', (newMessage: {
-      message: string;
-      senderId: string;
-      type: string;
-      recipientId?: string;
-      groupId?: string;
-    }) => {
-      if (newMessage.recipientId === userId || (newMessage.type === "group" && newMessage.groupId)) {
-        setMessages((prevMessages) => [...prevMessages, newMessage]);
-        setStartChat(true);
+    socket.on('privateChatStarted', ({ roomId, senderId }) => {
+      if (senderId === userId || selectedUser === senderId) {
+        setRoomId(roomId);
+        setChatStarted(true);
       }
     });
 
-    socket.on('roomCreated', ({ roomId, userId }) => {
-      if (userId === socket.id) {
-        setGroupId(roomId);
-        setStartChat(true);
-        socket.emit("join", roomId, selectedUsers);
-      }
-    });
-
-    socket.on('userJoined', ({ roomId, userId }) => {
-      console.log(`User ${userId} joined room: ${roomId}`);
-    });
     return () => {
       socket.off("connect");
       socket.off("message");
       socket.off("typing");
-      socket.off("openChat");
-      socket.off("userJoined");
-      socket.off("userJoined");
+     socket.off("privateChatStarted");
     };
-  }, [userId]);
+  }, [userId, selectedUser]);
 
   const handleMessageChange = (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
     setMessage(event.target.value);
     if (event.target.value.trim() !== "") {
-      socket.emit("typing", { type: chatType, recipientId: selectedUsers[0], groupId });
+      socket.emit("typing", { type: 'private', roomId });
     }
   };
 
@@ -107,88 +88,41 @@ const Chat = () => {
   };
 
   const handleStartChat = () => {
-    if (selectedUsers.length === 0) {
-    console.error('No users selected for chat.');
-    return;
-  }
-    if (selectedUsers.length === 1) {
-      setChatType("private");
-      setStartChat(true);
-      socket.emit("join", selectedUsers[0]);
-    } else if (selectedUsers.length > 1) {
-      setChatType("group");
-      setStartChat(true);
-      const newGroupId = generateGroupId(); // Generate a unique group ID (you can implement this)
-      setGroupId(newGroupId);
-      setMessages([]); // Clear previous messages
-      socket.emit("join", newGroupId, selectedUsers); // Join group chat with the generated group ID
+    if (!selectedUser) {
+      console.error('No user selected for chat.');
+      return;
     }
+    console.log('Recipient ID', selectedUser);
+    socket.emit('startPrivateChat', selectedUser);
   };
-
-  const generateGroupId = (): string => {
-    return "group_chat_" + Math.random().toString(36).substr(2, 9);
-  };
-
   const sendMessage = () => {
     if (message.trim() !== "") {
-      let newMessage: {
-        message: string;
-        senderId: string;
-        type: string;
-        recipientId?: string;
-        groupId?: string;
+      const newMessage = {
+        message,
+        senderId: userId,
+        type: 'private',
+        roomId,
       };
-  
-      if (chatType === "private") {
-        newMessage = {
-          message,
-          senderId: userId,
-          type: chatType,
-          recipientId: selectedUsers[0], // Assign recipientId for private chat
-        };
-      } else if (chatType === "group") {
-        newMessage = {
-          message,
-          senderId: userId,
-          type: chatType,
-          groupId: groupId, // Assign groupId for group chat
-        };
-      } else {
-        newMessage = {
-          message,
-          senderId: userId,
-          type: chatType,
-        };
-      }
-  
+
       socket.emit("message", newMessage);
       setMessages((prevMessages) => [...prevMessages, newMessage]);
       setMessage("");
     }
   };
-  
 
-  if (!startChat) {
+  if (!chatStarted) {
     return (
       <div className="user-selection-panel">
-        <h2>Select Users to Chat</h2>
+        <h2>Select a User to Chat</h2>
         <div className="user-list">
           {users.map((user) => (
             <div key={user._id} className="user-item">
               <input
-                type="checkbox"
+                type="radio"
                 id={user._id}
+                name="selectedUser"
                 value={user._id}
-                onChange={(e) => {
-                  const selectedUserId = e.target.value;
-                  setSelectedUsers((prevSelectedUsers) =>
-                    e.target.checked
-                      ? [...prevSelectedUsers, selectedUserId]
-                      : prevSelectedUsers.filter(
-                          (id) => id !== selectedUserId
-                        )
-                  );
-                }}
+                onChange={(e) => setSelectedUser(e.target.value)}
               />
               <label htmlFor={user._id}>{user.firstName + " " + user.lastName}</label>
             </div>

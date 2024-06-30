@@ -14,7 +14,7 @@ export const createPost = async (req: Request, res: Response) => {
   const creatorID = (req as any).user?.id;
   const trimmedContent = content.trim();
   if (!content || trimmedContent.length < 3) {
-    return res.status(400).send("Title and content are required and cannot be empty or only whitespace.");
+    return res.status(400).send("Content is required and cannot be empty or whitespace.");
   }
   const postStatus = status || "draft";
   try {
@@ -25,7 +25,6 @@ export const createPost = async (req: Request, res: Response) => {
     }
 
     let image = "";
-    console.log(req.file)
     if (req.file) {
       image = `/uploads/${req.file.filename}`;
       console.log(req.file.filename)
@@ -35,6 +34,7 @@ export const createPost = async (req: Request, res: Response) => {
     content: trimmedContent,
     createDate: new Date(),
     creatorID: creatorID, 
+    creatorName: `${user.firstName} ${user.lastName}`,
     tags: tags || [],
     status: postStatus,
     comments: [],
@@ -131,7 +131,7 @@ export const updatePost = async (req: Request, res: Response) => {
 
   try {
     await checkPostOwnership(req, res, async () => {
-      const post = await Post.findById(postId);
+      const post = await Post.findById(postId).populate('creatorID', 'firstName lastName');
       if (!post) {
          res.status(StatusCodes.NOT_FOUND).json({ message: "Post not found" });
          return;
@@ -146,7 +146,12 @@ export const updatePost = async (req: Request, res: Response) => {
       };
   
       const updatedPost = await Post.findByIdAndUpdate(postId, updatedPostData, { new: true });
-     return res.json(updatedPost);
+      if (updatedPost) {
+        await updatedPost.populate('creatorID', 'firstName lastName');
+        return res.json(updatedPost);
+      } else {
+        return res.status(StatusCodes.NOT_FOUND).json({ message: "Post not found" });
+      }
     });
   } catch (error: any) {
     res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ message: error.message });

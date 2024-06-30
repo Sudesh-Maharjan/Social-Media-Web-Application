@@ -56,14 +56,16 @@ socket.on('storeSocketId', async(userId: string) => {
 });
 
    socket.on('startPrivateChat', async(data) => {
-     const {recipientId, message} = data;
+     const {recipientId, roomId} = data;
      try {
       const recipient = await User.findById(recipientId);
       if(recipient && recipient.socketID){
-         io.to(recipient.socketID).emit('newMessage', {
-            message,
-            senderId: socket.id,
+        socket.join(roomId);//Join the room
+         io.to(recipient.socketID).emit('privateChatStarted', {
+          roomId,
+            senderId: socket.id
          });
+         console.log('Chat Started with:', recipientId)
       }else{
          console.error('Recipient not found or not conncted!');
       }
@@ -73,22 +75,15 @@ socket.on('storeSocketId', async(userId: string) => {
     });
   
     socket.on('message', (msg) => {
-      const { message, type, recipientId, groupId } = msg;
+      const { message, type, roomId } = msg;
   
       // Emit message based on type
       if (type === 'private') {
-        io.to(recipientId).emit('message', {
+        socket.broadcast.to(roomId).emit('message', {
           message,
           senderId: socket.id,
           type,
-          recipientId,
-        });
-      } else if (type === 'group') {
-        io.to(groupId).emit('message', {
-          message,
-          senderId: socket.id,
-          type,
-          groupId,
+          roomId,
         });
       } else {
         socket.broadcast.emit('message', {
@@ -99,9 +94,9 @@ socket.on('storeSocketId', async(userId: string) => {
       }
     });
    socket.on('typing', (data) => {
-      const { type, recipientId, roomId } = data;
+      const { type, roomId } = data;
       if (type === 'private') {
-        io.to(roomId).emit('typing', { senderId: socket.id, type, roomId });
+        socket.broadcast.to(roomId).emit('typing', { senderId: socket.id, type, roomId });
       } else {
         socket.broadcast.emit('typing', { senderId: socket.id });
       }

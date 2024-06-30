@@ -17,10 +17,11 @@ const Chat = () => {
   const [typingUsers, setTypingUsers] = useState<string[]>([]);
   const [selectedUser, setSelectedUser] = useState<string>("");
   const [chatStarted, setChatStarted] = useState<boolean>(false);
-  const [roomId, setRoomId] = useState<string>("");
+  const [room, setRoom] = useState<string>("");
   const dispatch = useDispatch();
   const users = useSelector(selectUsers);
-
+  const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
+console.log('Room:',room)
   useEffect(() => {
     dispatch(fetchUsers());
   }, [dispatch]);
@@ -28,7 +29,8 @@ const Chat = () => {
   useEffect(() => {
     socket.on("connect", () => {
       setUserId(socket.id || "");
-      console.log('Socket ID', userId)
+      console.log('Socket ID', socket.id)
+      console.log('Connected to server');
     });
 
     socket.on("message", (newMessage: {
@@ -55,10 +57,11 @@ const Chat = () => {
       }
     });
     socket.on('privateChatStarted', ({ roomId, senderId }) => {
-      if (senderId === userId || selectedUser === senderId) {
-        setRoomId(roomId);
+      console.log('RoomID:', roomId, 'SenderID:', senderId, 'UserID:', userId)
+        setRoom(roomId);
         setChatStarted(true);
-      }
+        socket.emit('joinRoom', roomId);
+      console.log('Private chat from backend:', roomId, senderId)
     });
 
     return () => {
@@ -74,7 +77,7 @@ const Chat = () => {
   ) => {
     setMessage(event.target.value);
     if (event.target.value.trim() !== "") {
-      socket.emit("typing", { type: 'private', roomId });
+      socket.emit("typing", { type: 'private', room });
     }
   };
 
@@ -92,16 +95,20 @@ const Chat = () => {
       console.error('No user selected for chat.');
       return;
     }
-    console.log('Recipient ID', selectedUser);
-    socket.emit('startPrivateChat', selectedUser);
+    const roomId = `${socket.id}${selectedUser}`;
+    console.log('Room ID', roomId);
+    socket.emit('startPrivateChat', { recipientId: selectedUser, roomId });
+    setRoom(roomId);
+    setChatStarted(true);
+    setSidebarOpen(false);
   };
   const sendMessage = () => {
     if (message.trim() !== "") {
       const newMessage = {
         message,
-        senderId: userId,
+        senderId: socket.id,
         type: 'private',
-        roomId,
+        roomId: room,
       };
 
       socket.emit("message", newMessage);
@@ -110,71 +117,74 @@ const Chat = () => {
     }
   };
 
-  if (!chatStarted) {
-    return (
-      <div className="user-selection-panel">
-        <h2>Select a User to Chat</h2>
-        <div className="user-list">
+
+  return (
+    <div className="relative h-screen flex">
+    <div className="flex-shrink-0">
+      <Button onClick={() => setSidebarOpen(true)}>+ Start Chat</Button>
+    </div>
+    
+    <div className={`fixed inset-y-0 right-0 w-64 bg-white shadow-lg transform ${sidebarOpen ? 'translate-x-0' : 'translate-x-full'} transition-transform duration-400`}>
+      <div className="p-3 mt-32">
+        <h2 className="text-xl font-semibold mb-4">Select a User to Chat</h2>
+        <div className="user-list space-y-2">
           {users.map((user) => (
-            <div key={user._id} className="user-item">
+            <div key={user._id} className="user-item flex items-center space-x-2">
               <input
                 type="radio"
                 id={user._id}
                 name="selectedUser"
                 value={user._id}
                 onChange={(e) => setSelectedUser(e.target.value)}
+                className="form-radio"
               />
               <label htmlFor={user._id}>{user.firstName + " " + user.lastName}</label>
             </div>
           ))}
         </div>
-        <Button onClick={handleStartChat}>Start Chat</Button>
-      </div>
-    );
-  }
-
-  return (
-    <div className="absolute rounded-md shadow-md w-80 h-80 left-56 hover:cursor-pointer flex flex-col justify-between">
-      <div>
-        <h2 className="bg-black text-white rounded-t-md p-2 text-sm">Name</h2>
-        <div
-          className="scrollable-container inline-block overflow-y-auto h-full p-2"
-          style={{ maxHeight: "200px" }}
-        >
-          {messages.map((msg, index) => (
-            <div
-              key={index}
-              className={`p-2 rounded-md my-1 ${
-                msg.senderId === userId ? "bg-blue-300 self-end" : "bg-gray-300 self-start"
-              }`}
-              style={{ maxWidth: calculateWidth(msg.message) }}
-            >
-              {msg.message}
-            </div>
-          ))}
-        </div>
-        {typingUsers.length > 0 && (
-          <div className="typing-indicator">
-            {typingUsers.join(", ")} {typingUsers.length > 1 ? "are" : "is"} typing...
-          </div>
-        )}
-      </div>
-      <div className="p-2 bg-gray-100 rounded-b-md">
-        <input
-          className="w-full p-2 rounded-md border border-gray-300"
-          type="text"
-          placeholder="Type a message"
-          value={message}
-          onChange={handleMessageChange}
-          onKeyPress={(e) => {
-            if (e.key === "Enter") sendMessage();
-          }}
-        />
-        <Button onClick={sendMessage} className="mt-2">
-          Send
-        </Button>
+        <Button onClick={handleStartChat} className="mt-4 w-full">Start Chat</Button>
       </div>
     </div>
+    
+    {chatStarted && (
+      <div className="absolute rounded-md shadow-md w-80 h-80 left-56 hover:cursor-pointer flex flex-col justify-between">
+        <div>
+          <h2 className="bg-black text-white rounded-t-md p-2 text-sm">Name</h2>
+          <div className="scrollable-container inline-block overflow-y-auto h-full p-2" style={{ maxHeight: "200px" }}>
+            {messages.map((msg, index) => (
+              <div
+                key={index}
+                className={`p-2 rounded-md my-1 ${msg.senderId === userId ? "bg-blue-300 self-end" : "bg-gray-300 self-start"}`}
+                style={{ maxWidth: calculateWidth(msg.message) }}
+              >
+                {msg.message}
+              </div>
+            ))}
+          </div>
+          {typingUsers.length > 0 && (
+            <div className="typing-indicator">
+              {typingUsers.join(", ")} {typingUsers.length > 1 ? "are" : "is"} typing...
+            </div>
+          )}
+        </div>
+        <div className="p-2 bg-gray-100 rounded-b-md">
+          <input
+            className="w-full p-2 rounded-md border border-gray-300"
+            type="text"
+            placeholder="Type a message"
+            value={message}
+            onChange={handleMessageChange}
+            // onKeyPress={(e) => {
+            //   if (e.key === "Enter") sendMessage();
+            // }}
+          />
+          <Button onClick={sendMessage} className="mt-2">
+            Send
+          </Button>
+        </div>
+      </div>
+    )}
+  </div>
   );
 };
 

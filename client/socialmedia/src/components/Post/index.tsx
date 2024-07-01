@@ -24,11 +24,17 @@ import CommentComponent from "../Comment/Comment";
 import UserSuggestions from "../UserSuggestions/UserSiggestions";
 import { useNavigate } from "react-router-dom";
 import { AiOutlineLike, AiFillLike } from "react-icons/ai";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card"
 const PostComponent = () => {
   const dispatch: AppDispatch = useDispatch();
   const navigate = useNavigate();
   const { posts, loading, error } = useSelector((state: RootState) => state.posts);
   const userId = useSelector((state: RootState) => state.auth.userId);
+  const users = useSelector((state: RootState) => state.users.users);
 console.log(userId)
   const [content, setContent] = useState("");
   const [image, setImage] = useState<File | null>(null);
@@ -111,6 +117,7 @@ console.log(userId)
     } else {
       setLikedPosts([...likedPosts, postId]);
     }
+    
   };
 
   const handleCommentClick = (postId: string) => {
@@ -127,6 +134,30 @@ console.log(userId)
   const handlePhotoClick = (postId: string) => {
     navigate(`/posts/${postId}`);
   }
+  const renderLikedUsers = (post: Post) => {
+    if (!post.likes.length) return null;
+
+    const likedUsers = users.filter(user => post.likes.includes(user._id));
+    
+    return (
+      <div className="flex items-center space-x-2 text-sm my-2">
+        <span className="text-slate-500">
+        <HoverCard>
+          <HoverCardTrigger className="hover:underline hover:cursor-pointer">
+          {likedUsers.length} {likedUsers.length > 1 ? 'people' : 'person'}
+          </HoverCardTrigger>
+          <HoverCardContent className="bg-black text-white text-sm">
+            {likedUsers.map(user => (
+              <div key={user._id}>
+                {user.firstName} {user.lastName}
+              </div>
+            ))}
+          </HoverCardContent>
+        </HoverCard>
+          <span> liked your post</span></span>
+      </div>
+    );
+  };
   return (
     <>
       <div className="border inline-block m-5 p-2 absolute z-10 rounded-lg shadow-md bg-white">
@@ -195,7 +226,9 @@ console.log(userId)
               {post.image && (
                 <img src={`${post.image}`} alt="Post" className="w-full h-[600px] mt-2 object-cover cursor-pointer" onClick={() => handlePhotoClick(post._id)} />
               )}
-              <div className="flex justify-between mt-4">
+              {renderLikedUsers(post)}
+              <div className="flex justify-between mt-2 border-y-2">
+
               <button onClick={() => handleLike(post._id)} className="text-md flex items-center justify-center gap-1">
                     {userId && likedPosts.includes(post._id)  ? (
                       <>

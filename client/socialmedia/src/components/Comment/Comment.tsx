@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { addComment, deleteComment, fetchComments, updateComment } from '../../redux/slices/commentSlice';
 import { RootState, AppDispatch } from '../../redux/store';
@@ -11,6 +11,9 @@ import moment from 'moment';
 import { FaEdit } from "react-icons/fa";
 import { RxCross2 } from "react-icons/rx";
 import { FaCheck } from "react-icons/fa6";
+import data from '@emoji-mart/data'
+import Picker from '@emoji-mart/react'
+
 interface CommentComponentProps {
   postId: string;
 }
@@ -22,6 +25,10 @@ const CommentComponent: React.FC<CommentComponentProps> = ({ postId }) => {
   const [newComment, setNewComment] = useState('');
   const [editCommentId, setEditCommentId] = useState<string | null>(null);
   const [editCommentText, setEditCommentText] = useState('');
+
+  const [emojiPickerVisible, setEmojiPickerVisible] = useState(false);
+  const emojiPickerRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     dispatch(fetchComments(postId));
   }, [dispatch, postId]);
@@ -55,6 +62,10 @@ const CommentComponent: React.FC<CommentComponentProps> = ({ postId }) => {
     }).catch(error => {
       console.error('Failed to delete comment:', error);
     });
+  };
+
+  const handleEmojiSelect = (emoji: any) => {
+    setNewComment(prev => prev + emoji.native);
   };
 
   const renderComment = (comment: Comment) => {
@@ -111,16 +122,24 @@ const CommentComponent: React.FC<CommentComponentProps> = ({ postId }) => {
           </li>
         ))}
       </ul>
-      <div className="mt-4 flex">
+      <div className="mt-4 flex relative">
         <input
           placeholder="Add a comment..."
           value={newComment}
           onChange={(e) => setNewComment(e.target.value)}
           className="w-full px-3 border rounded-lg focus:outline-none focus:border-black"
         ></input>
+        <button onClick={() => setEmojiPickerVisible(!emojiPickerVisible)} className="ml-2 border rounded-md px-2">
+          😊
+        </button>
         <Button onClick={handleAddComment} className="ml-2">
           <IoSend />
         </Button>
+        {emojiPickerVisible && (
+          <div ref={emojiPickerRef} className="absolute top-10 mt-2 right-0 z-10">
+           <Picker data={data} emojiSize={20} emojiButtonSize={28} onEmojiSelect={handleEmojiSelect} maxFrequentRows={0}/>
+          </div>
+        )}
       </div>
     </div>
   );

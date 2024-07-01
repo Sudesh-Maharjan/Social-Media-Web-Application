@@ -8,7 +8,7 @@ export interface Post {
 _id: string;
 content: string;
 image: string;
-likes: string;
+likes: string[];
 userId: string;
 creatorName: string;
 formattedCreateDate: string;

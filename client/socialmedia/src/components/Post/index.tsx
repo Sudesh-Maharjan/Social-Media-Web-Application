@@ -23,13 +23,13 @@ import '../../../public/css/styles.css';
 import CommentComponent from "../Comment/Comment"; 
 import UserSuggestions from "../UserSuggestions/UserSiggestions";
 import { useNavigate } from "react-router-dom";
-
+import { AiOutlineLike, AiFillLike } from "react-icons/ai";
 const PostComponent = () => {
   const dispatch: AppDispatch = useDispatch();
   const navigate = useNavigate();
   const { posts, loading, error } = useSelector((state: RootState) => state.posts);
   const userId = useSelector((state: RootState) => state.auth.userId);
-
+console.log(userId)
   const [content, setContent] = useState("");
   const [image, setImage] = useState<File | null>(null);
   //create post or update post form
@@ -37,13 +37,19 @@ const PostComponent = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [currentPostId, setCurrentPostId] = useState<string | null>(null);
   const [showCommentInput, setShowCommentInput] = useState<{ [key: string]: boolean }>({});
-
+  const [likedPosts, setLikedPosts] = useState<string[]>([]);
   const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
     dispatch(fetchPosts());
   }, [dispatch]);
 
+  useEffect(() => {
+    if (userId) {
+      const likedPostsIds = posts.filter(post => post.likes.includes(userId)).map(post => post._id);
+      setLikedPosts(likedPostsIds);
+    }
+  }, [posts, userId]);
   const handleEdit = (post: Post) => {
     setContent(post.content);
     setCurrentPostId(post._id);
@@ -97,10 +103,13 @@ const PostComponent = () => {
   };
 
   const handleLike = (postId: string) => {
-    if (userId) {
-      dispatch(likePost(postId));
+    console.log('like button clicked', postId)
+    dispatch(likePost(postId));
+    //imeediately update the liked posts
+    if (likedPosts.includes(postId)) {
+      setLikedPosts(likedPosts.filter(id => id !== postId));
     } else {
-      console.error('User ID is null.');
+      setLikedPosts([...likedPosts, postId]);
     }
   };
 
@@ -187,9 +196,17 @@ const PostComponent = () => {
                 <img src={`${post.image}`} alt="Post" className="w-full h-[600px] mt-2 object-cover cursor-pointer" onClick={() => handlePhotoClick(post._id)} />
               )}
               <div className="flex justify-between mt-4">
-                <button onClick={() => handleLike(post._id)}>
-                  {userId && post.likes.includes(userId) ? 'Unlike' : 'Like'} ({post.likes.length})
-                </button>
+              <button onClick={() => handleLike(post._id)} className="text-md flex items-center justify-center gap-1">
+                    {userId && likedPosts.includes(post._id)  ? (
+                      <>
+                        <AiFillLike className="text-xl font-bold" /> Liked
+                      </>
+                    ) : (
+                      <>
+                        <AiOutlineLike className="text-xl" /> Like
+                      </>
+                    )}
+                  </button>
                 <button className="text-gray-600 hover:text-gray-800 flex items-center hover:bg-slate-100 p-2 transition duration-300 rounded-md" onClick={() => handleCommentClick(post._id)}>
                   <FaRegComment className="mx-1" />
                   Comment

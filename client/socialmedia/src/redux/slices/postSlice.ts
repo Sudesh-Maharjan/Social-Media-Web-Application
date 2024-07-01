@@ -23,7 +23,7 @@ import { RootState } from '../store';
 
   export const fetchPostDetails = createAsyncThunk( 'posts/fetchPostDetails', async (postId: string) => {
     try {
-      const accessToken = getAccessToken();
+      const accessToken = getAccessToken() ?? '';
       const response = await axios.get<Post[]>(`${API_BASE_URL}/posts/${postId}`, {
         headers: {
           Authorization: `Bearer ${accessToken}`,
@@ -32,13 +32,14 @@ import { RootState } from '../store';
       const postDetails = response.data;
       console.log('Post Details:',postDetails);
       return postDetails;
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to fetch post details')
+    } catch (error) {
+      toast.error((error as Error).message || 'Failed to fetch post details');
+      throw error;
     }
   })
   export const fetchPosts = createAsyncThunk('posts/fetchPosts', async () => {
     try {
-      const accessToken = getAccessToken();
+      const accessToken = getAccessToken() ?? '';
       const response = await axios.get<Post[]>(`${API_BASE_URL}/posts`, {
         headers: {
           Authorization: `Bearer ${accessToken}`,
@@ -58,8 +59,9 @@ import { RootState } from '../store';
       }
   
       return posts;
-    } catch (error: any) {
-     toast.error(error.message || 'Failed to fetch posts');
+    } catch (error) {
+      toast.error((error as Error).message || 'Failed to fetch posts');
+      throw error;
     }
   });
   
@@ -74,8 +76,9 @@ import { RootState } from '../store';
      });
      toast.success('Post created successfully!')
      return response.data;
-   } catch (error:any) {
-     toast.error(error.message || 'Failed to create post');
+   } catch (error) {
+    toast.error((error as Error).message || 'Failed to create post');
+    throw error;
    }
  });
 export const updatePost = createAsyncThunk('posts/updatePost', async ({postId, formData}: {postId:string, formData: FormData})=> {
@@ -90,9 +93,9 @@ export const updatePost = createAsyncThunk('posts/updatePost', async ({postId, f
     console.log("update post:", response.data)
     toast.success('Post updated successfully!');
     return response.data;
-  } catch (error: any) {
-    console.error('Error updating post:', error.response ? error.response.data : error.message);
-toast.error(error.message || 'Failed to update post');    
+  } catch (error) {
+toast.error((error as Error).message || 'Failed to update post');
+throw error;
   }
 })
 export const deletePost = createAsyncThunk('posts/deletePost', async (postId: string)=>{
@@ -105,43 +108,53 @@ export const deletePost = createAsyncThunk('posts/deletePost', async (postId: st
     });
     toast.success('Post deleted successfully!')
     return postId;
-  } catch (error: any) {
-    toast.error(error.message || 'Failed to delete post')
+  } catch (error) {
+    toast.error((error as Error).message || 'Failed to delete post');
+    throw error;
   }
 })
 export const likePost = createAsyncThunk(
   'posts/likePost',
   async (postId: string, { getState }) => {
-    const state = getState() as RootState;
-    const { userId, accessToken } = state.auth;
-    
-    if (!userId || !accessToken) {
-     toast.error('You must be logged in to like/dislike a post');
-    }
+    try {
+      const state = getState() as RootState;
+      const { accessToken } = state.auth;
+      const response = await axios.post<Post>(
+        `${API_BASE_URL}/posts/${postId}/like`,
+        {},
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
 
-    // Your API call here
-    const response = await fetch(`/api/posts/${postId}/like`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${accessToken}`
+      if (!response.data) {
+        toast.error('Failed to like/dislike post');
+        return;
       }
-    });
-
-    if (!response.ok) {
+     return response.data;
+    } catch (error) {
+      console.error('Error liking/disliking post:', error);
       toast.error('Failed to like/dislike post');
+      throw error;
     }
-
-    const data = await response.json();
-    return data;
   }
 );
-
 
 const postSlice = createSlice({
   name: 'posts',
   initialState,
-  reducers: {},
+  reducers: {
+    updatePostInState(state, action) {
+      const updatedPost = action.payload;
+      const index = state.posts.findIndex((post) => post._id === updatedPost._id);
+      if (index !== -1) {
+        state.posts[index] = updatedPost;
+      }
+    },
+  },
   extraReducers: (builder) => {
     builder
       .addCase(fetchPosts.pending, (state) => {
@@ -162,9 +175,9 @@ const postSlice = createSlice({
         state.error = null;
       })
       .addCase(createPost.fulfilled, (state, action) => {
-        const newPost = action.payload;
-        if (newPost) {
-          state.posts.push(newPost);
+        const newPosts = action.payload;
+        if (newPosts) {
+          state.posts.push(...newPosts);
         }
         state.loading = false;
         state.error = null;
@@ -204,10 +217,10 @@ const postSlice = createSlice({
         state.error = action.error.message;
       })
       .addCase(likePost.fulfilled, (state, action) => {
-        // Update state after successful like
-        const likedPost = state.posts.find(post => post._id === action.payload._id);
-        if (likedPost) {
-          likedPost.likes = action.payload.likes;
+        const { liked, _id } = action.payload as Partial<Post>;
+        const index = state.posts.findIndex((post) => post._id === _id);
+        if (index !== -1) {
+          state.posts[index].likes = liked;
         }
       })
       .addCase(likePost.rejected, (state, action) => {
@@ -217,5 +230,5 @@ const postSlice = createSlice({
   
   },
 });
-
+export const { updatePostInState } = postSlice.actions;
 export default postSlice.reducer;

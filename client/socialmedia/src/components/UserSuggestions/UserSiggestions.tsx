@@ -10,6 +10,7 @@ const UserSuggestions = () => {
   const users: User[] = useSelector(selectUsers);
   const loading = useSelector(selectUsersLoading);
   const [loggedInUserId, setLoggedInUserId] = useState<string | null>(null);
+  const darkMode = useSelector((state: AppState) => state.theme.darkMode);
 
   useEffect(() => {
     const userData = localStorage.getItem('userId');
@@ -47,10 +48,10 @@ const UserSuggestions = () => {
   const randomUsers = getRandomUsers(users, 5);
 
   return (
-    <div className='w-72'>
-      <h1 className='font-bold bg-slate-200 rounded-md p-2 flex justify-center items-center'>User Suggestions</h1>
+    <div className={`w-72 ${darkMode ? 'bg-customBlack':'bg-customWhite'}`}>
+      <h1 className={`font-bold rounded-md p-2 flex justify-center items-center ${darkMode ? 'bg-customHoverBlack text-customWhite' : 'bg-customGray'}`}>User Suggestions</h1>
       {randomUsers.map((user) => (
-        <div key={user._id} className='p-2 bg-slate-100 my-3 rounded-lg flex gap-4'>
+        <div key={user._id} className={`${darkMode ? 'bg-customHoverBlack text-customWhite': 'bg-customGray text-customBlack'} p-2 my-3 rounded-lg flex gap-4`}>
           <div className="w-52">
             <p className='font-bold'>{user.firstName} {user.lastName}</p>
             <p className='text-sm'>{user.email}</p>

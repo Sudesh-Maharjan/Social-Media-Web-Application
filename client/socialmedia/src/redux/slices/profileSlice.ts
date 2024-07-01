@@ -5,6 +5,7 @@ interface RootState {
   profile: ProfileState;
 }
 import API_BASE_URL from '@/config';
+import { toast } from 'sonner';
 
 interface ProfileState {
   loading: boolean;
@@ -27,15 +28,16 @@ export const uploadProfilePicture = createAsyncThunk(
   async (formData: FormData, { dispatch }) => {
     try {
       const accessToken = getAccessToken();
-      const response = await axios.post<{ filePath: string }>(`${API_BASE_URL}/users/upload-profile-picture`, formData, {
+      const response = await axios.post<{ imagePath: string }>(`${API_BASE_URL}/users/upload-profile-picture`, formData, {
         headers: {
           Authorization: `Bearer ${accessToken}`,
           'Content-Type': 'multipart/form-data',
         },
       });
 
-      dispatch(uploadProfilePictureSuccess(response.data.filePath));
-      return response.data.filePath;
+      dispatch(uploadProfilePictureSuccess(response.data.imagePath));
+      console.log('Image path:', response.data.imagePath)
+      return response.data.imagePath;
     } catch (error: any) {
       dispatch(uploadProfilePictureFailure(error.message || 'Failed to upload profile picture'));
       throw error;
@@ -48,23 +50,30 @@ export const deleteProfilePicture = createAsyncThunk(
    async (_, { dispatch }) => {
      try {
        const accessToken = getAccessToken();
-       await axios.delete(`${API_BASE_URL}/uploads/delete-profile-picture`, {
+       await axios.delete(`${API_BASE_URL}/users/delete-profile-picture`, {
          headers: {
            Authorization: `Bearer ${accessToken}`,
          },
        });
- 
        dispatch(deleteProfilePictureSuccess());
+       toast.success('Profile picture deleted successfully');
+        return true;
      } catch (error: any) {
        dispatch(deleteProfilePictureFailure(error.message || 'Failed to delete profile picture'));
+       toast.error('Failed to delete profile picture');
        throw error;
      }
    }
  );
 export const profileSlice = createSlice({
   name: 'profile',
-  initialState,
+  initialState: {
+    loading: false,
+    error: null,
+    profilePictureUrl: null
+  },
   reducers: {
+    
     uploadProfilePictureStart(state) {
       state.loading = true;
       state.error = null;
@@ -97,6 +106,7 @@ export const profileSlice = createSlice({
         state.error = null;
       })
       .addCase(uploadProfilePicture.fulfilled, (state, action) => {
+        console.log('Profile picture:', action.payload)
         state.loading = false;
         state.profilePictureUrl = action.payload;
       })

@@ -321,33 +321,37 @@ export const unfollowUser = async (req: AuthenticatedRequest, res: Response) =>{
 }
 
 export const uploadProfilePicture = async (req: AuthenticatedRequest, res: Response) => {
-try {
-  upload.single('file')(req, res, async function (err){
-    if(err instanceof multer.MulterError) {
-      console.error('Multer error:', err);
-      return res.status(500).json({message: 'Multer error', error: err});
-    }else if(err){
-      console.error('Error uploading file:', err);
-      return res.status(500).json({message: 'Error uploading file', error: err});
+  try {
+    const userId = req.user?.id; // Assuming req.user is set by your auth middleware
+    if (!userId) {
+      return res.status(401).json({ message: 'User not authenticated' });
     }
 
-    const file = req.file;
-    if(!file){
-      return res.status(400).json({message: 'No file uploaded'});
-    }
+    upload.single('profilePicture')(req, res, async function (err) {
+      if (err instanceof multer.MulterError) {
+        console.error('Multer error:', err);
+        return res.status(500).json({ message: 'Multer error', error: err });
+      }
 
-    const userId = req.user?.id;
-    const filePath = file.path;
+      const file = req.file;
+      if (!file) {
+        return res.status(400).json({ message: 'No file uploaded' });
+      }
 
-    await User.findByIdAndUpdate(userId, { profilePicture: filePath });
-
-    res.status(200).json({message: 'Profile picture uploaded successfully', filePath});
-  })
-} catch (error: any) {
-  console.error('Error uploading profile picture:', error);
-  res.status(500).json({ message: 'Failed to upload profile picture', error: error.message})
-}
-}
+      const imagePath = `/uploads/${file.filename}`;
+      try {
+        await User.findByIdAndUpdate(userId, { profilePicture: imagePath }, { new: true });
+        res.status(200).json({ message: 'Profile picture uploaded successfully', imagePath });
+      } catch (error: any) {
+        console.error('Error updating user with profile picture:', error);
+        res.status(500).json({ message: 'Failed to update user with profile picture', error: error.message });
+      }
+    });
+  } catch (error: any) {
+    console.error('Unexpected error:', error);
+    res.status(500).json({ message: 'Unexpected error occurred', error: error.message });
+  }
+};
 export const deleteProfilePicture = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const userId = req.user?.id;

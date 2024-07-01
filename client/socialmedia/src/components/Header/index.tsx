@@ -19,7 +19,8 @@ import { searchUsers , selectUsers} from '@/redux/slices/userSlice';
 import { User } from '@/types';
 import { fetchNotifications , deleteNotification} from '@/redux/slices/notificationSlice';
 
-const Index = () => {
+// const currentUser =
+const Index: React.FC<HeaderProps> = ({profilePictureUrl}) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
@@ -129,7 +130,7 @@ useEffect(() => {
     dispatch(deleteNotification(notificationId));
   };
   return (
-   <nav className={`sticky z-10 border border-b-1 border-b-black ${darkMode ? 'bg-secondary-foreground' : 'bg-white'}`}>
+   <nav className={`sticky z-30 border border-b-1 top-0 border-b-black ${darkMode ? 'bg-customSoftBlack' : 'bg-customWhite'}`}>
    <div className="max-w-7xl mx-auto px-4">
      <div className="flex justify-between items-center">
        <div className="flex items-center">
@@ -147,7 +148,7 @@ useEffect(() => {
         <input
         ref={searchRef}
           type="text"
-          className={`rounded-full bg-slate-200 p-2 text-secondary-foreground transition duration-200 ${
+          className={`rounded-full bg-customGray p-2 text-secondary-foreground transition duration-200 ${
             isSearchOpen ? 'block w-64' : 'hidden'
           }`}
           placeholder="Search..."
@@ -156,7 +157,7 @@ useEffect(() => {
         />
         <button
           onClick={() => setIsSearchOpen(!isSearchOpen)}
-          className={`rounded-full bg-slate-200 p-2 text-secondary-foreground hover:bg-slate-300 transition duration-200 ${
+          className={`rounded-full  p-2 ${darkMode ? 'bg-customHoverBlack text-customWhite': 'bg-customGray text-customBlack'} transition duration-200 ${
             isSearchOpen ? 'hidden' : 'block'
           }`}
         >
@@ -165,10 +166,10 @@ useEffect(() => {
         {/* Search input */}
         
   {searchResultsVisible && (
-                <div className={`absolute z-50 right-0 mt-2 w-64 ${darkMode ? 'bg-secondary-foreground' : 'bg-white'} shadow-lg py-1 rounded-md flex flex-col text-${darkMode ? 'white' : 'black'}`}>
+                <div className={`absolute z-50 right-0 mt-2 w-64 ${darkMode ? 'bg-customBlack text-customWhite' : 'bg-customWhite text-customBlack'} shadow-lg py-1 rounded-md flex flex-col`}>
                   {users.length > 0 ? (
                     users.map(user => (
-                      <div key={user._id} className={`px-4 py-2 cursor-pointer  flex flex-col ${darkMode? 'hover:bg-white hover:text-black' : 'hover:bg-black hover:text-white'}`} onClick={() =>handleUserSelect(user)}>
+                      <div key={user._id} className={`px-4 py-2 cursor-pointer  flex flex-col ${darkMode? 'hover:bg-customWhite hover:text-customBlack' : 'hover:bg-customBlack hover:text-customWhite'}`} onClick={() =>handleUserSelect(user)}>
                         
                         <span>{user.firstName} {user.lastName}</span>
                         <span className='text-sm'>{user.email}</span>
@@ -180,55 +181,55 @@ useEffect(() => {
                 </div>
               )}
 </div>
-<button className='rounded-full bg-slate-200 p-2 text-secondary-foreground hover:bg-slate-300 transition duration-200'>
+<button className={`rounded-full p-2 transition duration-200 ${darkMode ? 'bg-customHoverBlack text-customWhite' : 'bg-customGray text-customBlack'}`}>
                   <IoIosChatboxes onClick={() => setIsChatOpen(!isChatOpen)} className='text-2xl'/>
                 </button>
-                <button onClick={() => setIsNotificationOpen(!isNotificationOpen)} className='rounded-full bg-slate-200 p-2 text-secondary-foreground hover:bg-slate-300 transition duration-200'>
+                <button onClick={() => setIsNotificationOpen(!isNotificationOpen)} className={`rounded-full  p-2 transition duration-200 ${darkMode ? 'bg-customHoverBlack text-customWhite' : 'bg-customGray text-customBlack'}`}>
                   <IoIosNotifications className='text-2xl'/>
                 </button>
                 <button
-                  className="flex text-white items-center focus:outline-none "
+                  className="flex text-customWhite items-center focus:outline-none "
                   onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                 >
                 <img
                   className="h-8 w-8 rounded-full object-cover"
-                  src="https://randomuser.me/api/portraits/women/68.jpg"
+                  src={profilePictureUrl}
                   alt="Profile"
                 />
-                <RiArrowDropDownLine className={`text-${darkMode ? 'white' : 'black'} text-2xl`} />
+                <RiArrowDropDownLine className={`${darkMode ? 'text-customWhite' : 'text-customBlack'} text-2xl`} />
               </button>
               </div>
               {isDropdownOpen && (
-                <div className={`absolute right-0 mt-2 w-48 ${darkMode ? 'bg-secondary-foreground' : 'bg-white'} shadow-lg py-1 rounded-md flex flex-col text-${darkMode ? 'white' : 'black'}`}>
-                  <div className={`px-4 py-2 flex items-center gap-3 hover:cursor-pointer ${darkMode ? 'hover:bg-slate-800' : 'hover:bg-slate-100'}`} onClick={navigateToUserProfile}>
+                <div className={`absolute right-0 mt-2 w-48 ${darkMode ? 'bg-customBlack' : 'bg-customWhite'} shadow-lg py-1 rounded-md flex flex-col ${darkMode ? 'text-customWhite' : 'text-customBlack'}`}>
+                  <div className={`px-4 py-2 flex items-center gap-3 hover:cursor-pointer ${darkMode ? 'hover:bg-customHoverBlack' : 'hover:bg-customGray'}`} onClick={navigateToUserProfile}>
                     <FaUser />
-                    <span className={`text-${darkMode ? 'white' : 'black'}`}>{userName}</span>
+                    <span className={`${darkMode ? 'cus' : 'black'}`}>{userName}</span>
                   </div>
-                  <div className={`flex px-6 py-2 gap-3 ${darkMode ? 'hover:bg-slate-800' : 'hover:bg-slate-100'} rounded-md items-center cursor-pointer`}  onClick={handleLogout}>
-                    <FiLogOut className={`text-${darkMode ? 'white' : 'black'}`} />
+                  <div className={`flex px-6 py-2 gap-3 ${darkMode ? 'hover:bg-customHoverBlack' : 'hover:bg-customGray'} rounded-md items-center cursor-pointer`}  onClick={handleLogout}>
+                    <FiLogOut className={`${darkMode ? 'text-customWhite' : 'text-customBlack'}`} />
                     <button
-                      className={`block px-4 py-2 text-${darkMode ? 'white' : 'black'}`}
+                      className={`block px-4 py-2 ${darkMode ? 'text-customWhite' : 'text-customBlack'}`}
                     >
                       Logout
                     </button>
                   </div>
-                  <div className={`flex px-6 py-2 gap-3 ${darkMode ? 'hover:bg-slate-800' : 'hover:bg-slate-100'} items-center cursor-pointer`}>
+                  <div className={`flex px-6 py-2 gap-3 ${darkMode ? 'hover:bg-customHoverBlack' : 'hover:bg-customGray'} items-center cursor-pointer`}>
                     <CiSettings className="text-xl" />
                     <div
-                      className={`block px-4 py-2 text-${darkMode ? 'white' : 'black'}`}
+                      className={`block px-4 py-2 ${darkMode ? 'text-customWhite' : 'text-customBlack'}`}
                     >
                       Settings
                     </div>
                   </div>
-                  <div className={`flex px-6 py-2 gap-7 ${darkMode ? 'hover:bg-slate-800' : 'hover:bg-slate-100'} items-center cursor-pointer`} onClick={() => dispatch(toggleTheme())}>
+                  <div className={`flex px-6 py-2 gap-7 ${darkMode ? 'hover:bg-customHoverBlack' : 'hover:bg-customGray'} items-center cursor-pointer`} onClick={() => dispatch(toggleTheme())}>
                     {darkMode ? <RiSunLine className="text-xl text-yellow-400" /> : <RiMoonClearLine className="text-xl text-gray-700" />}
                     <span className={`text-${darkMode ? 'white' : 'black'}`}>{darkMode ? 'Light Mode' : 'Dark Mode'}</span>
                   </div>
                 </div>
               )}
                {isNotificationOpen && (
-        <div className="absolute right-0 mt-2 w-80 bg-white border border-black rounded-lg shadow-lg overflow-hidden z-20" ref={notificationRef}>
-          <div className={`flex items-center justify-between px-4 py-2 ${darkMode ? 'bg-black text-white' : 'bg-white text-black' }`}>
+        <div className="absolute right-0 mt-2 w-80 border rounded-lg shadow-lg overflow-hidden z-20" ref={notificationRef}>
+          <div className={`flex items-center justify-between px-4 py-2 ${darkMode ? 'bg-customBlack text-customWhite' : 'bg-customWhite text-customBlack' }`}>
             <h2 className="text-lg">Notifications</h2>
             <button className="focus:outline-none" onClick={() => setIsNotificationOpen(false)}>
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -239,8 +240,8 @@ useEffect(() => {
           <div className="divide-y divide-gray-300">
             {notifications.length > 0 ? (
               notifications.map(notification => (
-                <div key={notification._id} className={`px-4 py-3 cursor-pointer hover:bg-gray-100 ${darkMode ? 'bg-black text-white' : 'bg-white text-black'}`}>
-                  <p className={`text-sm ${darkMode ? 'text-white' : 'text-black'}`}>{notification.message}</p>
+                <div key={notification._id} className={`px-4 py-3 cursor-pointer hover:bg-gray-100 ${darkMode ? 'bg-customBlack text-customWhite' : 'bg-customWhite text-customBlack'}`}>
+                  <p className={`text-sm ${darkMode ? 'text-customWhite' : 'text-customBlack'}`}>{notification.message}</p>
                   <button onClick={() => handleDeleteNotification(notification._id)} className="text-xs text-gray-500 hover:text-red-500 focus:outline-none">
                     Delete
                   </button>

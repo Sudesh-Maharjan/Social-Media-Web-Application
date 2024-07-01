@@ -14,8 +14,7 @@ import { MdOutlineMail, MdOutlineVerified } from "react-icons/md";
 import "../../../public/css/styles.css";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { selectProfilePictureUrl, uploadProfilePicture } from "@/redux/slices/profileSlice";
-import socket from "@/socket";
+import { deleteProfilePicture, uploadProfilePicture } from "@/redux/slices/profileSlice";
 const ProfilePage: React.FC = React.memo(() => {
   const dispatch: AppDispatch = useDispatch();
   const navigate = useNavigate();
@@ -25,7 +24,7 @@ const ProfilePage: React.FC = React.memo(() => {
   //putting logged in users id in state for conditional rendering of profile page.
   const [loggedInUserId, setLoggedInUserId] = React.useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const profilePictureUrl = useSelector<RootState, string | null>(selectProfilePictureUrl);
+  const profilePictureUrl = useSelector((state: RootState) => state.profile.profilePictureUrl);
   useEffect(() => {
     const userData = localStorage.getItem("userId");
     console.log(userData)
@@ -55,9 +54,9 @@ const ProfilePage: React.FC = React.memo(() => {
     }
   };
 
-  // const handleDeletePicture = () => {
-  //   dispatch(deleteProfilePicture());
-  // };
+  const handleDeletePicture = () => {
+    dispatch(deleteProfilePicture());
+  };
 
   const handleFollow = () => {
     if (currentUser && loggedInUserId) {
@@ -99,20 +98,18 @@ const ProfilePage: React.FC = React.memo(() => {
               className="rounded-full w-56 h-56 bg-slate-300 hover:cursor-pointer hover:opacity-85 flex justify-center items-center"
               onClick={() => {
                 if (fileInputRef.current) {
-                  console.log("File input ref is not null");
                   fileInputRef.current.click();
                 } else {
                   console.log("File input ref is null");
                 }
               }}
             >
-              {profilePictureUrl ? (
-                <img src={profilePictureUrl} alt="Profile" className="w-full h-full object-cover rounded-full" />
+              {currentUser.profilePicture || profilePictureUrl ? (
+                <img src={currentUser.profilePicture || profil} alt="Profile" className="w-full h-full object-cover rounded-full" />
               ) : (
-                "Upload a Photo"
-              )}
-            </div>
-              <input
+                <>
+                Click to upload
+                <input
                 type="file"
                 id="upload-photo"
                 accept="image/*"
@@ -120,6 +117,11 @@ const ProfilePage: React.FC = React.memo(() => {
                 onChange={handleUploadPicture}
                 className="hidden"
               />
+                </>
+              )}
+            </div>
+              
+              <button onClick={handleDeletePicture}>Delete</button>
             <h1 className="text-3xl font-bold mt-7 mb-2">{`${currentUser.firstName} ${currentUser.lastName}`}</h1>
             {!isOwnProfile && (
               <div className="mt-4">

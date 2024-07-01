@@ -121,7 +121,7 @@ console.log('Room:',room)
   return (
     <div className="relative h-screen flex">
     <div className="flex-shrink-0">
-      <Button onClick={() => setSidebarOpen(true)}>+ Start Chat</Button>
+      <Button onClick={() => setSidebarOpen(true)} className="w-56 h-12">+ Start Chat</Button>
     </div>
     
     <div className={`fixed inset-y-0 right-0 w-64 bg-white shadow-lg transform ${sidebarOpen ? 'translate-x-0' : 'translate-x-full'} transition-transform duration-400`}>

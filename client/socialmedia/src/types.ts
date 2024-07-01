@@ -20,6 +20,7 @@ export interface User {
   lastName: string;
   email: string;
   isVerified: boolean;
+  profilePicture: string;
   isFollowing: boolean;
    followers: User[];
    following: User[];

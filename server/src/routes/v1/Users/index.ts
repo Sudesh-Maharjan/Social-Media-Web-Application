@@ -18,7 +18,8 @@ router.post('/password/validate-token', validateResetToken);
 router.post('/follow', auth, followUser);
 router.post('/unfollow', auth, unfollowUser);
 
-router.post('/upload-profile-picture', upload.single('profilePicture'), uploadProfilePicture);
+router.post('/upload-profile-picture', auth, upload.single('profilePicture'), uploadProfilePicture);
+router.delete('/delete-profile-picture', auth, upload.single('profilePicture'), uploadProfilePicture);
 router.use(refreshTokenRoute);
 
 

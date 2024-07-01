@@ -192,11 +192,11 @@ const commentId = req.params.commentId;
 };
 
 export const likeOrDislikePost = async (req: Request, res: Response) => {
-  const { id } = req.params;
+  const { postId } = req.params;
   const userId = (req as any).user?.id;
 
   try {
-    const post = await Post.findById(id);
+    const post = await Post.findById(postId);
     if (!post) {
       return res.status(404).json({ message: 'Post not found' });
     }
@@ -206,14 +206,14 @@ export const likeOrDislikePost = async (req: Request, res: Response) => {
     if (isLiked) {
       // If already liked, unlike the post
       post.likes = post.likes.filter((like) => like.toString() !== userId.toString());
+      await post.save();
+      return res.json({ message: 'Post unliked', liked: false });
     } else {
       // If not liked, like the post
       post.likes.push(userId);
+      await post.save();
+      return res.json({ message: 'Post liked', liked: true });
     }
-
-    await post.save();
-    res.json({ message: 'Post like/unlike successful', likes: post.likes });
-    return;
   } catch (error) {
     console.error('Error liking/unliking post:', error);
     res.status(500).send('Internal Server Error');

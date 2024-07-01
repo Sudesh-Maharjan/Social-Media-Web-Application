@@ -18,7 +18,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Post } from "@/types";
+import { AppState, Post } from "@/types";
 import '../../../public/css/styles.css';
 import CommentComponent from "../Comment/Comment"; 
 import UserSuggestions from "../UserSuggestions/UserSiggestions";
@@ -29,7 +29,10 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from "@/components/ui/hover-card"
+import Chat from "../Chat/Chat";
 const PostComponent = () => {
+  const darkMode = useSelector((state: AppState) => state.theme.darkMode);
+
   const dispatch: AppDispatch = useDispatch();
   const navigate = useNavigate();
   const { posts, loading, error } = useSelector((state: RootState) => state.posts);
@@ -160,15 +163,15 @@ console.log(userId)
   };
   return (
     <>
-      <div className="border inline-block m-5 p-2 absolute z-10 rounded-lg shadow-md bg-white">
+      <div className={`border inline-block m-5 p-2 absolute z-10 rounded-lg shadow-md ${darkMode ? 'bg-customBlack' : 'bg-customWhite'}`}>
         <div className="flex flex-col gap-5 ">
           <UserSuggestions/>
-          <Button className="rounded-lg p-4 cursor-pointer" onClick={() => setShowForm(!showForm)}>
+          <Button className={`rounded-lg p-4 cursor-pointer  ${darkMode ? 'bg-customHoverBlack hover:bg-customHoverBlack' : 'bg-customBlack'}`} onClick={() => setShowForm(!showForm)}>
             Post
           </Button>
         </div>
       </div>
-      <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center bg-slate-100">
+      <div className={`min-h-screen flex flex-col items-center justify-center  ${darkMode ? 'bg-customBlack' : 'bg-customWhite'}`}>
         {showForm && (
           <div className="absolute top-0 left-0 w-full h-full bg-gray-800 bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-10">
             <form ref={formRef} onSubmit={handleSubmit} encType="multipart/form-data" className="bg-white shadow-md rounded-lg p-8 w-96">
@@ -257,6 +260,9 @@ console.log(userId)
           ))}
         </div>
         </div>
+      </div>
+      <div className="absolute top-24 right-5">
+      <Chat/>
       </div>
     </>
   );

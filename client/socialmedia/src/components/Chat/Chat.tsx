@@ -29,7 +29,7 @@ console.log('Room:',room)
   useEffect(() => {
     socket.on("connect", () => {
       setUserId(socket.id || "");
-      console.log('Socket ID', socket.id)
+      console.log('Socket ID', socket.id);
       console.log('Connected to server');
     });
 
@@ -57,7 +57,6 @@ console.log('Room:',room)
       }
     });
     socket.on('privateChatStarted', ({ roomId, senderId }) => {
-      console.log('RoomID:', roomId, 'SenderID:', senderId, 'UserID:', userId)
         setRoom(roomId);
         setChatStarted(true);
         socket.emit('joinRoom', roomId);
@@ -99,8 +98,8 @@ console.log('Room:',room)
     console.log('Room ID', roomId);
     socket.emit('startPrivateChat', { recipientId: selectedUser, roomId });
     setRoom(roomId);
-    setChatStarted(true);
-    setSidebarOpen(false);
+    setChatStarted(true);//Chat box opens after starting chat
+    setSidebarOpen(false);//sidebar closes after starting chat
   };
   const sendMessage = () => {
     if (message.trim() !== "") {
@@ -111,9 +110,9 @@ console.log('Room:',room)
         roomId: room,
       };
 
-      socket.emit("message", newMessage);
-      setMessages((prevMessages) => [...prevMessages, newMessage]);
-      setMessage("");
+      socket.emit("message", newMessage);//send msg to server
+      setMessages((prevMessages) => [...prevMessages, newMessage]);//setting messsage state
+      setMessage("");//clear input field
     }
   };
 
@@ -147,7 +146,7 @@ console.log('Room:',room)
     </div>
     
     {chatStarted && (
-      <div className="absolute rounded-md shadow-md w-80 h-80 left-56 hover:cursor-pointer flex flex-col justify-between">
+      <div className="fixed bottom-0 rounded-md shadow-md w-80 h-80 right-20 hover:cursor-pointer flex flex-col justify-between">
         <div>
           <h2 className="bg-black text-white rounded-t-md p-2 text-sm">Name</h2>
           <div className="scrollable-container inline-block overflow-y-auto h-full p-2" style={{ maxHeight: "200px" }}>
@@ -174,9 +173,9 @@ console.log('Room:',room)
             placeholder="Type a message"
             value={message}
             onChange={handleMessageChange}
-            // onKeyPress={(e) => {
-            //   if (e.key === "Enter") sendMessage();
-            // }}
+            onKeyPress={(e) => {
+              if (e.key === "Enter") sendMessage();
+            }}
           />
           <Button onClick={sendMessage} className="mt-2">
             Send

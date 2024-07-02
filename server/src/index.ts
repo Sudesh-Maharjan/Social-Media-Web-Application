@@ -60,7 +60,8 @@ socket.on('storeSocketId', async(userId: string) => {
      try {
       const recipient = await User.findById(recipientId);
       if(recipient && recipient.socketID){
-        socket.join(roomId);//Join the room
+        socket.join(roomId);//receiver joins the room
+        console.log('Sender joined room:', roomId);
          io.to(recipient.socketID).emit('privateChatStarted', {
           roomId,
             senderId: socket.id
@@ -73,6 +74,11 @@ socket.on('storeSocketId', async(userId: string) => {
       console.error('Error sending message:', error)
      }
     });
+    //Join the room when notified
+    socket.on('joinRoom', (roomId) =>{
+      socket.join(roomId);
+      console.log(`User ${socket.id} joined room ${roomId}`)
+    })
   
     socket.on('message', (msg) => {
       const { message, type, roomId } = msg;

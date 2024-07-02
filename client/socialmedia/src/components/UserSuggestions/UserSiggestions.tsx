@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { followUser, unfollowUser, selectUsers, selectUsersLoading, fetchUsers } from '../../redux/slices/userSlice';
 import { AppDispatch } from '@/redux/store';
-import { User } from '@/types';
+import { AppState, User } from '@/types';
 import { Button } from '../ui/button';
 
 const UserSuggestions = () => {

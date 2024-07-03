@@ -6,10 +6,12 @@ import userRoutes from './routes/v1/Users/index';
 import postRoutes from './routes/v1/Posts/index';
 import commentRoutes from './routes/v1/Comment/index';
 import notificationRoutes from './routes/v1/Notification/index';
+import messageRoutes from './routes/v1/Chat/index';
 import path from 'path';
 import { Server } from 'socket.io';
 import http from 'http';
 import User from './routes/v1/Users/model';
+import Message from './routes/v1/Chat/model';
 dotenv.config();
 
 const app = express();
@@ -37,6 +39,7 @@ app.use('/api/v1/users', userRoutes);
 app.use('/api/v1/posts', postRoutes);
 app.use('/api/v1/comments', commentRoutes);
 app.use('/api/v1/notifications', notificationRoutes)
+app.use('/api/v1/messages', messageRoutes);
 io.on('connection', (socket) =>{
    console.log('A new user has been connected', socket.id);
 socket.on('storeSocketId', async(userId: string) => {
@@ -60,13 +63,17 @@ socket.on('storeSocketId', async(userId: string) => {
      try {
       const recipient = await User.findById(recipientId);
       if(recipient && recipient.socketID){
-        socket.join(roomId);//receiver joins the room
+        socket.join(roomId);//sender joins the room
+        const chatHistory = await Message.find({roomId}).sort({timeStamp: 1});
+        console.log('ChatHistory',chatHistory)
+        socket.emit('fetchChatHistory', chatHistory);//Emmit chat history to sender
         console.log('Sender joined room:', roomId);
          io.to(recipient.socketID).emit('privateChatStarted', {
           roomId,
             senderId: socket.id
          });
          console.log('Chat Started with:', recipientId)
+        
       }else{
          console.error('Recipient not found or not conncted!');
       }
@@ -75,26 +82,37 @@ socket.on('storeSocketId', async(userId: string) => {
      }
     });
     //Join the room when notified
-    socket.on('joinRoom', (roomId) =>{
+    socket.on('joinRoom', async(roomId) =>{
       socket.join(roomId);
+      const chatHistory = await Message.find({roomId}).sort({timeStamp: 1});
+        console.log('ChatHistory',chatHistory)
+        socket.emit('fetchChatHistory', chatHistory);
       console.log(`User ${socket.id} joined room ${roomId}`)
     })
   
-    socket.on('message', (msg) => {
-      const { message, type, roomId } = msg;
+    socket.on('message', async (msg) => {
+      const { message, type, roomId, senderId } = msg;
+  //Save message to database
+  const newMessage = new Message({
+    roomId,
+    senderId,
+    senderSocketId: socket.id,
+    message,
+  });
+  await newMessage.save();//save message to db
   
       // Emit message based on type
       if (type === 'private') {
         socket.broadcast.to(roomId).emit('message', {
           message,
-          senderId: socket.id,
+          senderSocketId: socket.id,
           type,
           roomId,
         });
       } else {
         socket.broadcast.emit('message', {
           message,
-          senderId: socket.id,
+          senderSocketId: socket.id,
           type,
         });
       }

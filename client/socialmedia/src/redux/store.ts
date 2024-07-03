@@ -6,6 +6,8 @@ import userReducer from './slices/userSlice';
 import commentReducer from './slices/commentSlice';
 import profileReducer from './slices/profileSlice';
 import notificationReducer from './slices/notificationSlice';
+import chatReducer from './slices/chatSlice';
+
 const store = configureStore({
   reducer: {
     posts:postReducer,
@@ -15,6 +17,7 @@ const store = configureStore({
     comment:commentReducer,
     profile: profileReducer,
     notifications: notificationReducer,
+    chat: chatReducer,
   },
 });
 export type RootState = ReturnType<typeof store.getState>;

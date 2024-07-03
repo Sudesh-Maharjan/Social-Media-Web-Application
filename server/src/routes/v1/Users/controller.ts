@@ -133,7 +133,7 @@ export const login = async (req: Request, res: Response) => {
 
     res.cookie('accessToken', accessToken, { httpOnly: true, secure: true, maxAge: 3600000 }); // 1 hour expiration
     res.cookie('refreshToken', refreshToken, { httpOnly: true, secure: true, maxAge: 604800000 }); // 7 days expiration
-    res.status(200).json({ accessToken, refreshToken, user: {id: user._id, firstName: user.firstName, lastName: user.lastName, email: user.email } });
+    res.status(200).json({ accessToken, refreshToken, user: {id: user._id, firstName: user.firstName, lastName: user.lastName, email: user.email , profilePicture: user.profilePicture} });
   } catch (error) {
     res.status(500).send('Server error');
   }

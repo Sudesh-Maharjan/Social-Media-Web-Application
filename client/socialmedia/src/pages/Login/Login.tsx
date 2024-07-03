@@ -11,6 +11,8 @@ import Cookies from 'js-cookie';
 import { Form, FormField } from "@/components/ui/form";
 import API_BASE_URL from '../../config';
 import connectblack from '../../../public/images/connecblack.png';
+// import { setCurrentUser } from '@/redux/slices/userSlice';
+import { useDispatch } from 'react-redux';
 
 const loginSchema = z.object({
   email: z.string().email({ message: 'Invalid email address.' }),
@@ -20,6 +22,7 @@ const loginSchema = z.object({
 type LoginFormData = z.infer<typeof loginSchema>;
 
 const Login = () => {
+const dispatch = useDispatch();
   const [showLoginSuccess, setShowLoginSuccess] = useState(false);
 console.log(showLoginSuccess)
   const form = useForm<LoginFormData>({
@@ -40,7 +43,9 @@ console.log(showLoginSuccess)
         Cookies.set('accessToken', accessToken, { expires: 1 });
         localStorage.setItem('refreshToken', refreshToken);
         localStorage.setItem('User_data', JSON.stringify(response.data.user));
-        localStorage.setItem('userId', response.data.user.id); 
+        localStorage.setItem('userId', response.data.user.id);
+        localStorage.setItem('profilePicture', response.data.user.profilePicture);
+        // dispatch(setCurrentUser(response.data.user));
 
         toast.success('Login successful!');
         setShowLoginSuccess(true);

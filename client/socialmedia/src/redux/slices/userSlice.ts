@@ -1,5 +1,5 @@
 import API_BASE_URL from '@/config';
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import axios from 'axios';
 import { User } from '@/types';
 import { toast } from 'sonner';
@@ -22,9 +22,7 @@ interface RootState {
  const getAccessToken = () => {
    return localStorage.getItem('accessToken');
   }
-  // const getUserId = () => {
-  //   return localStorage.getItem('userId');
-  // };
+
 export const fetchUsers = createAsyncThunk('users/fetchUsers', async () => {
 try {
    const accesToken = getAccessToken();
@@ -106,14 +104,17 @@ const userSlice = createSlice({
    name: 'users',
    initialState,
    reducers: {
+    setCurrentUser: (state, action: PayloadAction<User | null>) => {
+      state.currentUser = action.payload;
+    },
     setAccessToken: (state, action) => {
       state.currentUser = action.payload;
     },
-    logoutUser: (state) => {
-      state.currentUser = null;
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('userId');
-    },
+    // logoutUser: (state) => {
+    //   state.currentUser = null;
+    //   localStorage.removeItem('accessToken');
+    //   localStorage.removeItem('userId');
+    // },
   },
    extraReducers: (builder) => {
       builder
@@ -184,6 +185,7 @@ const userSlice = createSlice({
       });
    },
 });
+export const { setAccessToken , setCurrentUser} = userSlice.actions;
 export const selectUsers = (state: RootState) => state.users.users;
 export const selectCurrentUser = (state: RootState) => state.users.currentUser;
 export const selectUsersLoading = (state: RootState) => state.users.loading;

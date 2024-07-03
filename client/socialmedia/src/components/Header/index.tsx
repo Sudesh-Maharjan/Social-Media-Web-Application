@@ -15,17 +15,17 @@ import { RiSearchLine } from 'react-icons/ri';
 import '../../../public/css/styles.css';
 import socket from '@/socket';
 import { AppDispatch, RootState } from '@/redux/store';
-import { searchUsers , selectUsers} from '@/redux/slices/userSlice';
+import { searchUsers , selectCurrentUser, selectUsers} from '@/redux/slices/userSlice';
 import { User } from '@/types';
 import { fetchNotifications , deleteNotification} from '@/redux/slices/notificationSlice';
 
 // const currentUser =
-const Index: React.FC<HeaderProps> = ({profilePictureUrl}) => {
+const Index = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [userName, setUserName] = useState('');
-
+  const [profilePicture, setProfilePicture] = useState('');
   const darkMode = useSelector((state: AppState) => state.theme.darkMode);
   const users = useSelector(selectUsers);
   const dispatch:AppDispatch = useDispatch();
@@ -41,6 +41,8 @@ const Index: React.FC<HeaderProps> = ({profilePictureUrl}) => {
 const notifications =useSelector((state: RootState) => state.notifications.notifications);
 // const recipient = useSelector((state: RootState) => state.auth.userId);
 const userId = localStorage.getItem('userId');
+const currentUser = useSelector(selectCurrentUser);
+console.log(currentUser)
   useEffect(() => {
     if (userId) {
       dispatch(fetchNotifications(userId));
@@ -85,6 +87,7 @@ useEffect(() => {
   if(userData){
      const user = JSON.parse(userData);
      setUserName(user.firstName + ' ' + user.lastName);
+     setProfilePicture(user.profilePicture);
   }
     }, []);
 
@@ -193,7 +196,7 @@ useEffect(() => {
                 >
                 <img
                   className="h-8 w-8 rounded-full object-cover"
-                  src={profilePictureUrl}
+                  src={profilePicture || currentUser?.profilePicture}
                   alt="Profile"
                 />
                 <RiArrowDropDownLine className={`${darkMode ? 'text-customWhite' : 'text-customBlack'} text-2xl`} />

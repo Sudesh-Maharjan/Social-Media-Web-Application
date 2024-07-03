@@ -222,6 +222,11 @@ console.log(userId)
                 </DropdownMenu>
               </div>
               <div className="flex flex-col">
+              <img
+                    src={users.find(user => user._id === post.creatorName)?.profilePicture || '/default-profile.png'}
+                    alt="Profile"
+                    className="w-8 h-8 rounded-full mr-2"
+                  />
                 <h4 className="text-sm font-semibold">{post.creatorName}</h4>
                 <small className="text-gray-500">{post.formattedCreateDate}</small>
               </div>

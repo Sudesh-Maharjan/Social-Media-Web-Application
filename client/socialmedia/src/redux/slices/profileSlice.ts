@@ -1,11 +1,8 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import axios from 'axios';
-
-interface RootState {
-  profile: ProfileState;
-}
 import API_BASE_URL from '@/config';
 import { toast } from 'sonner';
+import { RootState } from '../store';
 
 interface ProfileState {
   loading: boolean;
@@ -67,13 +64,11 @@ export const deleteProfilePicture = createAsyncThunk(
  );
 export const profileSlice = createSlice({
   name: 'profile',
-  initialState: {
-    loading: false,
-    error: null,
-    profilePictureUrl: null
-  },
+  initialState,
   reducers: {
-    
+    setProfilePicture(state, action) {
+      state.user.profilePictureUrl = action.payload;
+    },
     uploadProfilePictureStart(state) {
       state.loading = true;
       state.error = null;
@@ -134,5 +129,4 @@ export const { uploadProfilePictureStart, uploadProfilePictureSuccess, uploadPro
    deleteProfilePictureFailure, } = profileSlice.actions;
 
 export const selectProfilePictureUrl = (state: RootState) => state.profile.profilePictureUrl;
-
 export default profileSlice.reducer;

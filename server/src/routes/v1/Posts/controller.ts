@@ -87,7 +87,7 @@ export const getPosts = async (req: Request, res: Response) => {
         { content: { $regex: searchRegex } }
       ];
     }
-    const posts = await Post.find(query).populate('creatorID', 'firstName lastName');
+    const posts = await Post.find(query).populate('creatorID', 'firstName lastName profilePicture');
   
     const formattedPosts = posts.map(post => {
       const creator = post.creatorID as User;
@@ -112,7 +112,7 @@ export const getPost = async (req: Request, res: Response) => {
   const postId = req.params.id;
   try {
     await checkPostOwnership(req, res, async () => {
-      const post = await Post.findById(postId);
+      const post = await Post.findById(postId).populate('creatorID', 'firstName lastName profilePicture');
       if (!post) return res.status(404).send("Post not found");
     const imageUrl = `${req.protocol}://${req.get('host')}${post.image}`;
 

@@ -4,44 +4,49 @@ import { Button } from "../ui/button";
 import socket from "@/socket";
 import { fetchUsers, selectUsers } from "@/redux/slices/userSlice";
 import "../../../public/css/styles.css";
+import {fetchChatHistory, addMessage} from "@/redux/slices/chatSlice";
+import { AppDispatch, RootState } from "@/redux/store";
 
 const Chat = () => {
   const [message, setMessage] = useState<string>("");
-  const [messages, setMessages] = useState<{
-    message: string;
-    senderId: string;
-    type: string;
-    roomId?: string;
-  }[]>([]);
-  const [userId, setUserId] = useState<string>("");
   const [typingUsers, setTypingUsers] = useState<string[]>([]);
   const [selectedUser, setSelectedUser] = useState<string>("");
   const [chatStarted, setChatStarted] = useState<boolean>(false);
   const [room, setRoom] = useState<string>("");
-  const dispatch = useDispatch();
+  const dispatch: AppDispatch = useDispatch();
   const users = useSelector(selectUsers);
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
-console.log('Room:',room)
+  const messages: {
+    message: string;
+    senderId: string;
+    type: string;
+    roomId?: string;
+  }[] = useSelector((state: RootState) => state.chat.messages);
+  const chatStatus = useSelector((state: RootState) => state.chat.status);
+  const userId = localStorage.getItem('userId');
+  // console.log('Messages:', messages);
+  // console.log('User Id',userId);
   useEffect(() => {
     dispatch(fetchUsers());
-  }, [dispatch]);
 
-  useEffect(() => {
     socket.on("connect", () => {
-      setUserId(socket.id || "");
-      console.log('Socket ID', socket.id);
+      // setUserId(socket.id || "");
       console.log('Connected to server');
     });
+    socket.on('fetchChatHistory', (chatHistory) => {
+      dispatch(addMessage(chatHistory));
+      });
+      
+    socket.on('privateChatStarted', async({ roomId, senderId }) => {
+        setRoom(roomId);
+        setChatStarted(true);
+        socket.emit('joinRoom', roomId);
+      console.log('Private chat:', roomId, senderId);
+      dispatch(fetchChatHistory(roomId));
+    });
 
-    socket.on("message", (newMessage: {
-      message: string;
-      senderId: string;
-      type: string;
-      roomId?: string;
-    }) => {
-      console.log("Sender ID:", newMessage.senderId);
-      console.log('Type:', newMessage.type);
-      setMessages((prevMessages) => [...prevMessages, newMessage]);
+    socket.on("message", (newMessage)=> {
+     dispatch(addMessage(newMessage));
     });
 
     socket.on("typing", ({ senderId }) => {
@@ -56,20 +61,13 @@ console.log('Room:',room)
         }, 2000);
       }
     });
-    socket.on('privateChatStarted', ({ roomId, senderId }) => {
-        setRoom(roomId);
-        setChatStarted(true);
-        socket.emit('joinRoom', roomId);
-      console.log('Private chat from backend:', roomId, senderId)
-    });
-
     return () => {
       socket.off("connect");
       socket.off("message");
       socket.off("typing");
      socket.off("privateChatStarted");
     };
-  }, [userId, selectedUser]);
+  }, [userId, dispatch]);
 
   const handleMessageChange = (
     event: React.ChangeEvent<HTMLInputElement>
@@ -84,7 +82,7 @@ console.log('Room:',room)
     const minWidth = 50;
     const maxWidth = 300;
     const charWidth = 7;
-    const messageLength = message.length;
+    const messageLength = message ? message.length : 0;
     const width = Math.min(maxWidth, Math.max(minWidth, messageLength * charWidth));
     return `${width}px`;
   };
@@ -94,7 +92,7 @@ console.log('Room:',room)
       console.error('No user selected for chat.');
       return;
     }
-    const roomId = `${socket.id}${selectedUser}`;
+    const roomId = `${userId}${selectedUser}`;
     console.log('Room ID', roomId);
     socket.emit('startPrivateChat', { recipientId: selectedUser, roomId });
     setRoom(roomId);
@@ -105,13 +103,14 @@ console.log('Room:',room)
     if (message.trim() !== "") {
       const newMessage = {
         message,
-        senderId: socket.id,
+        senderId: userId,
+        senderSocketId: socket.id,
         type: 'private',
         roomId: room,
       };
 
       socket.emit("message", newMessage);//send msg to server
-      setMessages((prevMessages) => [...prevMessages, newMessage]);//setting messsage state
+     dispatch(addMessage(newMessage));
       setMessage("");//clear input field
     }
   };
@@ -149,15 +148,28 @@ console.log('Room:',room)
       <div className="fixed bottom-0 rounded-md shadow-md w-80 h-80 right-20 hover:cursor-pointer flex flex-col justify-between">
         <div>
           <h2 className="bg-black text-white rounded-t-md p-2 text-sm">Name</h2>
-          <div className="scrollable-container inline-block overflow-y-auto h-full p-2" style={{ maxHeight: "200px" }}>
+          <div className="scrollable-container overflow-y-auto h-full p-2" style={{ maxHeight: "200px" }}>
+          {chatStatus === "loading" && <p>Loading chat history...</p>}
+      
             {messages.map((msg, index) => (
+              msg.senderId === userId ? (
               <div
                 key={index}
-                className={`p-2 rounded-md my-1 ${msg.senderId === userId ? "bg-blue-300 self-end" : "bg-gray-300 self-start"}`}
+                className="p-2 rounded-md  my-1 bg-customBlack text-customWhite "
+                style={{ maxWidth: calculateWidth(msg.message) }}
+              >
+                {msg.message}
+                
+              </div>
+              ) : (
+                <div
+                key={index}
+                className="p-2 rounded-md my-1 bg-customGray text-customBlack inline-block ml-[240px]"
                 style={{ maxWidth: calculateWidth(msg.message) }}
               >
                 {msg.message}
               </div>
+              )
             ))}
           </div>
           {typingUsers.length > 0 && (

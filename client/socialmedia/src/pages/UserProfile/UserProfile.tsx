@@ -14,20 +14,19 @@ import { MdOutlineMail, MdOutlineVerified } from "react-icons/md";
 import "../../../public/css/styles.css";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { deleteProfilePicture, uploadProfilePicture } from "@/redux/slices/profileSlice";
+import { deleteProfilePicture, selectProfilePictureUrl, uploadProfilePicture } from "@/redux/slices/profileSlice";
 const ProfilePage: React.FC = React.memo(() => {
   const dispatch: AppDispatch = useDispatch();
   const navigate = useNavigate();
   const { userId } = useParams();
   const loading = useSelector<RootState, boolean>(selectUsersLoading);
-  const currentUser = useSelector<RootState, User | null>(selectCurrentUser);
+  const currentUser = useSelector(selectCurrentUser);
   //putting logged in users id in state for conditional rendering of profile page.
   const [loggedInUserId, setLoggedInUserId] = React.useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const profilePictureUrl = useSelector((state: RootState) => state.profile.profilePictureUrl);
+ const profilePictureUrl = useSelector(selectProfilePictureUrl);
   useEffect(() => {
     const userData = localStorage.getItem("userId");
-    console.log(userData)
     if (userData) {
       try {
         setLoggedInUserId(userData);
@@ -36,7 +35,8 @@ const ProfilePage: React.FC = React.memo(() => {
       }
     }
     if(userId){
-      dispatch(fetchUserDetails({_id: userId}));
+      dispatch(fetchUserDetails({ _id: userId }));
+
     }else if(loggedInUserId){
       dispatch(fetchUserDetails({_id: loggedInUserId}));
     }else{
@@ -105,7 +105,7 @@ const ProfilePage: React.FC = React.memo(() => {
               }}
             >
               {currentUser.profilePicture || profilePictureUrl ? (
-                <img src={currentUser.profilePicture || profil} alt="Profile" className="w-full h-full object-cover rounded-full" />
+                <img src={currentUser.profilePicture || profilePictureUrl} alt="Profile" className="w-full h-full object-cover rounded-full" />
               ) : (
                 <>
                 Click to upload

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef} from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Button } from "../ui/button";
 import socket from "@/socket";
@@ -6,7 +6,8 @@ import { fetchUsers, selectUsers } from "@/redux/slices/userSlice";
 import "../../../public/css/styles.css";
 import {fetchChatHistory, addMessage} from "@/redux/slices/chatSlice";
 import { AppDispatch, RootState } from "@/redux/store";
-
+import { IoMdSend } from "react-icons/io";
+import { IoIosArrowDropdownCircle } from "react-icons/io";
 const Chat = () => {
   const [message, setMessage] = useState<string>("");
   const [typingUsers, setTypingUsers] = useState<string[]>([]);
@@ -24,8 +25,7 @@ const Chat = () => {
   }[] = useSelector((state: RootState) => state.chat.messages);
   const chatStatus = useSelector((state: RootState) => state.chat.status);
   const userId = localStorage.getItem('userId');
-  // console.log('Messages:', messages);
-  // console.log('User Id',userId);
+const scrollRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     dispatch(fetchUsers());
 
@@ -47,6 +47,7 @@ const Chat = () => {
 
     socket.on("message", (newMessage)=> {
      dispatch(addMessage(newMessage));
+     scrollToBottom();
     });
 
     socket.on("typing", ({ senderId }) => {
@@ -112,9 +113,20 @@ const Chat = () => {
       socket.emit("message", newMessage);//send msg to server
      dispatch(addMessage(newMessage));
       setMessage("");//clear input field
+      scrollToBottom();
     }
   };
-
+const scrollToBottom = () => {
+  if(scrollRef.current){
+    scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+  }
+};
+const handleTerminateChat = () => {
+  setChatStarted(false);
+  setRoom("");
+  setTypingUsers([]);
+  dispatch({ type: "chat/clearMessages"});
+};
 
   return (
     <div className="relative h-screen flex">
@@ -145,17 +157,18 @@ const Chat = () => {
     </div>
     
     {chatStarted && (
-      <div className="fixed bottom-0 rounded-md shadow-md w-80 h-80 right-20 hover:cursor-pointer flex flex-col justify-between">
-        <div>
-          <h2 className="bg-black text-white rounded-t-md p-2 text-sm">Name</h2>
-          <div className="scrollable-container overflow-y-auto h-full p-2" style={{ maxHeight: "200px" }}>
+      <div className="fixed bottom-6 rounded-md shadow-md w-[350px] h-96 right-16 hover:cursor-pointer flex flex-col justify-between">
+        <div className="relative">
+        <button className="absolute top-2 right-2 text-white" onClick={handleTerminateChat}>✖</button>
+          <h2 className="bg-black text-white rounded-t-md p-2 text-md">Chat</h2>
+          <div ref={scrollRef} className="scrollable-container overflow-y-auto h-full p-2 " style={{ maxHeight: "200px" }}>
           {chatStatus === "loading" && <p>Loading chat history...</p>}
       
             {messages.map((msg, index) => (
               msg.senderId === userId ? (
               <div
                 key={index}
-                className="p-2 rounded-md  my-1 bg-customBlack text-customWhite "
+                className="p-2 rounded-md  my-1 bg-customGray text-customBlack ml-[160px] flex justify-end"
                 style={{ maxWidth: calculateWidth(msg.message) }}
               >
                 {msg.message}
@@ -164,7 +177,7 @@ const Chat = () => {
               ) : (
                 <div
                 key={index}
-                className="p-2 rounded-md my-1 bg-customGray text-customBlack inline-block ml-[240px]"
+                className="p-2 rounded-md my-1 bg-customBlack text-white inline-block "
                 style={{ maxWidth: calculateWidth(msg.message) }}
               >
                 {msg.message}
@@ -178,20 +191,25 @@ const Chat = () => {
             </div>
           )}
         </div>
-        <div className="p-2 bg-gray-100 rounded-b-md">
+        <div className="flex justify-center">
+        <button onClick={scrollToBottom} className=" mx-1 rounded-full bg-customHoverBlack hover:bg-slate-600 hover:animate-spin transition duration-200  text-white p-2"><IoIosArrowDropdownCircle /></button>
+        </div>
+        <div className=" rounded-b-md flex flex-col items-center gap-3">
+<div className="flex w-full items-center justify-center my-2">
           <input
-            className="w-full p-2 rounded-md border border-gray-300"
+            className="w-full h-8 p-1 border border-gray-300 rounded-full"
             type="text"
-            placeholder="Type a message"
+            placeholder="Aa"
             value={message}
             onChange={handleMessageChange}
             onKeyPress={(e) => {
               if (e.key === "Enter") sendMessage();
             }}
           />
-          <Button onClick={sendMessage} className="mt-2">
-            Send
-          </Button>
+          <button onClick={sendMessage} className=" mx-2 flex text-xl">
+          <IoMdSend />
+          </button>
+          </div>
         </div>
       </div>
     )}

@@ -221,14 +221,18 @@ console.log(userId)
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
-              <div className="flex flex-col">
+              <div className="flex ">
               <img
-                    src={users.find(user => user._id === post.creatorName)?.profilePicture || '/default-profile.png'}
+                    src={post.image}
                     alt="Profile"
-                    className="w-8 h-8 rounded-full mr-2"
+                    className="w-10 h-10 transition duration-100 rounded-full mr-2 cursor-pointer hover:opacity-85"
                   />
+                  <div className="flex flex-col">
+                    <a href="/" className="hover:underline">
                 <h4 className="text-sm font-semibold">{post.creatorName}</h4>
-                <small className="text-gray-500">{post.formattedCreateDate}</small>
+                </a>
+                <small className="text-slate-500 text-sm">{post.formattedCreateDate}</small>
+                </div>
               </div>
               <p className="text-gray-700">{post.content}</p>
               {post.image && (

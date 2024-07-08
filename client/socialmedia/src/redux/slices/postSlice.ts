@@ -30,7 +30,6 @@ import { RootState } from '../store';
         }
       });
       const postDetails = response.data;
-      console.log('Post Details:',postDetails);
       return postDetails;
     } catch (error) {
       toast.error((error as Error).message || 'Failed to fetch post details');
@@ -81,7 +80,7 @@ import { RootState } from '../store';
     throw error;
    }
  });
-export const updatePost = createAsyncThunk('posts/updatePost', async ({postId, formData}: {postId:string, formData: FormData})=> {
+export const updatePost = createAsyncThunk('posts/updatePost', async ({postId, formData}: {postId:string, formData: FormData}, {rejectWithValue})=> {
   try {
     const accessToken = getAccessToken();
     const response = await axios.put<Post[]>(`${API_BASE_URL}/posts/${postId}`,  formData,{
@@ -90,15 +89,19 @@ export const updatePost = createAsyncThunk('posts/updatePost', async ({postId, f
         'Content-Type': 'multipart/form-data',
       }
     });
-    console.log("update post:", response.data)
     toast.success('Post updated successfully!');
     return response.data;
-  } catch (error) {
-toast.error((error as Error).message || 'Failed to update post');
-throw error;
+  } catch (error: any) {
+    if (error.response && error.response.status === 403) {
+      toast.error(error.response.data.message || 'You are not authorized to perform this action.');
+    } else {
+      toast.error(error.message || 'Failed to update post.');
+    }
+    return rejectWithValue(error);
   }
+  
 })
-export const deletePost = createAsyncThunk('posts/deletePost', async (postId: string)=>{
+export const deletePost = createAsyncThunk('posts/deletePost', async (postId: string, {rejectWithValue})=>{
   try {
     const accessToken = getAccessToken();
     await axios.delete<Post[]>(`${API_BASE_URL}/posts/${postId}`,{
@@ -108,9 +111,13 @@ export const deletePost = createAsyncThunk('posts/deletePost', async (postId: st
     });
     toast.success('Post deleted successfully!')
     return postId;
-  } catch (error) {
-    toast.error((error as Error).message || 'Failed to delete post');
-    throw error;
+  } catch (error: any) {
+    if (error.response && error.response.status === 403) {
+      toast.error(error.response.data.message || 'You are not authorized to perform this action.');
+    } else {
+      toast.error(error.message || 'Failed to update post.');
+    }
+    return rejectWithValue(error);
   }
 })
 export const likePost = createAsyncThunk(
@@ -154,6 +161,10 @@ const postSlice = createSlice({
         state.posts[index] = updatedPost;
       }
     },
+    addNewPost(state, action) {
+      const newPost = action.payload;
+      state.posts.unshift(newPost);
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -175,12 +186,10 @@ const postSlice = createSlice({
         state.error = null;
       })
       .addCase(createPost.fulfilled, (state, action) => {
-        const newPosts = action.payload;
-        if (newPosts) {
-          state.posts.push(...newPosts);
-        }
-        state.loading = false;
-        state.error = null;
+        const newPost = action.payload;
+        state.posts.unshift(newPost);
+          state.loading = false;
+          state.error = null;
       })
       .addCase(createPost.rejected, (state, action) => {
         state.loading = false;

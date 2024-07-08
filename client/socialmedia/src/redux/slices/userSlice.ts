@@ -131,7 +131,6 @@ const userSlice = createSlice({
       .addCase(followUser.fulfilled, (state, action) => {
         state.loading = false;
         const updatedUser = action.payload;
-        console.log(updatedUser)
         state.users = state.users.map((user) =>
           user._id === updatedUser._id ? updatedUser : user
         );
@@ -146,7 +145,6 @@ const userSlice = createSlice({
        .addCase(unfollowUser.fulfilled, (state, action) => {
         state.loading = false;
         const updatedUser = action.payload;
-        console.log(updatedUser)
         state.users = state.users.map((user) =>
           user._id === updatedUser._id ? updatedUser : user
         );

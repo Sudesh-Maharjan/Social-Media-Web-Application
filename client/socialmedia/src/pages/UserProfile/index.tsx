@@ -21,13 +21,10 @@ const ProfilePage: React.FC = React.memo(() => {
   const { userId } = useParams();
   const loading = useSelector<RootState, boolean>(selectUsersLoading);
   const currentUser = useSelector(selectCurrentUser);
-  const users = useSelector(selectUsers);
   //putting logged in users id in state for conditional rendering of profile page.
   const [loggedInUserId, setLoggedInUserId] = React.useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
  const profilePictureUrl = useSelector(selectProfilePictureUrl);
- console.log(users);
- console.log(currentUser);
   useEffect(() => {
     const userData = localStorage.getItem("userId");
     if (userData) {

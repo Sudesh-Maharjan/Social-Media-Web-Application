@@ -110,7 +110,6 @@ const PostComponent = () => {
   };
 
   const handleLike = (postId: string) => {
-    console.log('like button clicked', postId)
     dispatch(likePost(postId));
     //imeediately update the liked posts
     if (likedPosts.includes(postId)) {
@@ -168,53 +167,88 @@ const PostComponent = () => {
     }
       }, []);
   return (<>
-    <div className={`min-h-screen flex flex-col items-center justify-center  ${darkMode ? 'bg-customBlack' : 'bg-customWhite'}`}>
-      {showForm && (
-        <div className="absolute top-0 left-0 w-full h-full bg-gray-800 bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-10">
-          <form ref={formRef} onSubmit={handleSubmit} encType="multipart/form-data" className="bg-white shadow-md rounded-lg p-8 h-[400px] w-[500px]">
-            <textarea
-              placeholder="What's on your mind?"
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              className="w-full px-3 py-2 border rounded-lg mb-3 focus:outline-none focus:border-blue-500"
-              rows={4}
-            ></textarea>
-            {isEditing && currentPostId !== null && (
-              <div className="mb-3">
-                <img
-                  src={posts.find((post) => post._id === currentPostId)?.image || ""}
-                  alt="Previous Image"
-                  className="w-full h-auto mt-2"
-                />
-              </div>
-            )}
-            <input type="file" onChange={handleFileChange} className="mb-3" />
-            <Button type="submit" className="text-white px-4 py-2 rounded-lg transition duration-200">
-              {isEditing ? "Update Post" : "Create Post"}
-            </Button>
-          </form>
-        </div>
-      )}
+    <div className={` flex flex-col items-center justify-center  ${darkMode ? 'bg-customBlack' : 'bg-customWhite'}`}>
+    {showForm && (
+          <div className="absolute top-20 left-0 w-full h-full bg-gray-800 bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-10">
+            <form
+              ref={formRef}
+              onSubmit={handleSubmit}
+              encType="multipart/form-data"
+              className="bg-white shadow-md rounded-lg p-8 h-full w-[570px]"
+            >
+              <textarea
+                placeholder={`What's on your mind... ${firstName} ?`}
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                className="w-full px-3 py-2 border rounded-lg mb-3 focus:outline-none focus:border-blue-500"
+                rows={4}
+              ></textarea>
+              {image && (
+                <div className="mb-3">
+                  <img
+                    src={URL.createObjectURL(image)}
+                    alt="Selected Image"
+                    className="w-full h-auto mt-2"
+                  />
+                </div>
+              )}
+              <input
+                type="file"
+                onChange={handleFileChange}
+                className="mb-3"
+              />
+              <Button
+                type="submit"
+                className="text-customWhite px-4 py-2 rounded-lg transition duration-200"
+              >
+                {isEditing ? "Update Post" : "Create Post"}
+              </Button>
+              <button
+                className="absolute top-3 right-3 text-gray-400 hover:text-gray-600"
+                onClick={() => {
+                  setShowForm(false);
+                  setIsEditing(false);
+                  setCurrentPostId(null);
+                }}
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-6 w-6"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </form>
+          </div>
+        )}
 
       {loading && <p className="mt-4 text-center">Loading...</p>}
       {error && <p className="mt-4 text-center text-red-500">{error}</p>}
       <div className="">
 <h1 className="font-bold text-xl">Posts</h1>
-        <div className="border rounded-md p-3 m-2">
+        <div className={` rounded-md p-3 m-2 ${darkMode ? 'border border-customHoverBlack':'border'}`}>
 <div className="flex gap-5 " onClick={() => setShowForm(!showForm)}>
 <img
                   className="h-10 w-10 cursor-pointer hover:opacity-85 transition duration-100 rounded-full object-cover"
                   src={profilePicture}
                   alt="Profile"
                 />
-  <input type="text" className="border rounded-full h-10 bg-slate-100 px-2 w-full hover:bg-slate-200 transition duration-200" placeholder={`What's on your mind... ${firstName} ?`} />
+  <input type="text" className={` rounded-full h-10 ${darkMode ? 'bg-customHoverBlack hover:bg-customSoftBlack': 'bg-slate-100 hover:bg-slate-200'}  px-2 w-full  transition duration-200`} placeholder={`What's on your mind... ${firstName} ?`} />
         
       </div>
       </div>
-      <div className={`mt-4 w-[680px] scrollable-container ${darkMode ? 'border-x-2 border-slate-600': 'border-x-2  '} px-4`} style={{ maxHeight: "600px" }}>
+      <div className={`mt-4 w-[680px] scrollable-container ${darkMode ? 'border-x-2 border-customHoverBlack': 'border-x-2  '} px-4`} style={{ maxHeight: "600px" }}>
         {posts.map((post) => (
           <div key={post._id} className={` ${darkMode ? 'bg-customBlack text-white' : 'bg-customWhite'} rounded-lg p-4 mb-4`}>
-            <div className="border p-3 rounded-md shadow-md relative">
+            <div className={`border p-3 rounded-md shadow-md relative ${darkMode ? 'border-customHoverBlack':'border-customGray'}`}>
             <div className="absolute top-1 right-3">
               <DropdownMenu>
                 <DropdownMenuTrigger>•••</DropdownMenuTrigger>
@@ -247,7 +281,7 @@ const PostComponent = () => {
               <img src={`${post.image}`} alt="Post" className="w-full h-[600px] mt-2 object-cover cursor-pointer" onClick={() => handlePhotoClick(post._id)} />
             )}
             {renderLikedUsers(post)}
-            <div className="flex justify-between mt-2 border-y-2">
+            <div className={`flex justify-between mt-2 border-y-2 ${darkMode ? 'border-customHoverBlack':'border-customGray'}`}>
 
             <button onClick={() => handleLike(post._id)} className="text-md flex items-center justify-center gap-1">
                   {userId && likedPosts.includes(post._id)  ? (
@@ -278,8 +312,7 @@ const PostComponent = () => {
       </div>
       </div>
     </div>
-    <div className="absolute top-24 right-5">
-    </div>
+  
   </>);
 };
 

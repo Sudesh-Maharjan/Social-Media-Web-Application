@@ -1,10 +1,8 @@
-import mongoose, { Schema } from "mongoose";
+import mongoose, { Schema, Document } from "mongoose";
 import  User  from "../Users/model";
-export interface Post {
+export interface Post extends Document {
   id: string;
   content: string;
-  createDate: Date;
-  updateDate?: Date;
   creatorID: mongoose.Types.ObjectId | User;
   tags: string[];
   status: "draft" | "published";
@@ -12,19 +10,15 @@ export interface Post {
   likes: mongoose.Types.ObjectId[];
   shares: mongoose.Types.ObjectId[];
   image?: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 const PostSchema: Schema<Post> = new Schema({
   content: {
     type: String,
     required: true,
-  },
-  createDate: {
-    type: Date,
-    default: Date.now,
-  },
-  updateDate: {
-    type: Date,
+    minlength: 1,
   },
   creatorID: {
     type: mongoose.Types.ObjectId,
@@ -59,8 +53,14 @@ const PostSchema: Schema<Post> = new Schema({
   ],
   image: {
     type: String,
+    required: function () {
+      return this.content.length === 0;
+    },
   },
+},
+{
+  timestamps: true,
 });
-
-const Post = mongoose.model<Post>("Post", PostSchema);
+export type PostDocument = Post & Document;
+const Post = mongoose.model<PostDocument>("Post", PostSchema);
 export default Post;

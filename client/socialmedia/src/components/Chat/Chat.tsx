@@ -8,7 +8,10 @@ import {fetchChatHistory, addMessage} from "@/redux/slices/chatSlice";
 import { AppDispatch, RootState } from "@/redux/store";
 import { IoMdSend } from "react-icons/io";
 import { IoIosArrowDropdownCircle } from "react-icons/io";
+import { AppState } from "@/types";
 const Chat = () => {
+  const darkMode = useSelector((state: AppState) => state.theme.darkMode);
+
   const [message, setMessage] = useState<string>("");
   const [typingUsers, setTypingUsers] = useState<string[]>([]);
   const [selectedUser, setSelectedUser] = useState<string>("");
@@ -129,17 +132,17 @@ const handleTerminateChat = () => {
 };
 
   return (
-    <div className="relative h-screen flex">
+    <div className={`relative h-screen flex ${darkMode ? 'bg-customBlack' : 'bg-customWhite'}`}>
     <div className="flex-shrink-0">
-      <Button onClick={() => setSidebarOpen(true)} className="w-56 h-12">+ Start Chat</Button>
+      <Button onClick={() => setSidebarOpen(true)} className={`w-56 h-12 ${darkMode ? 'bg-customHoverBlack hover:bg-customHoverBlack':' bg-customBlack '}`}>+ Start Chat</Button>
     </div>
     
-    <div className={`fixed inset-y-0 right-0 w-64 bg-white shadow-lg transform ${sidebarOpen ? 'translate-x-0' : 'translate-x-full'} transition-transform duration-400`}>
-      <div className="p-3 mt-32">
-        <h2 className="text-xl font-semibold mb-4">Select a User to Chat</h2>
+    <div className={`fixed inset-y-0 right-0 w-64 ${darkMode ? 'bg-customBlack' : 'bg-customWhite'} shadow-lg transform ${sidebarOpen ? 'translate-x-0' : 'translate-x-full'} transition-transform duration-400`}>
+      <div className="pt-28 px-4">
+        <h2 className={`text-xl font-semibold mb-4 ${darkMode ? 'text-customWhite':'text-customBlack'}`}>Select a User to Chat</h2>
         <div className="user-list space-y-2">
           {users.map((user) => (
-            <div key={user._id} className="user-item flex items-center space-x-2">
+            <div key={user._id} className={`user-item flex items-center space-x-2 ${darkMode ? 'text-customWhite' : 'text-customBlack'}`}>
               <input
                 type="radio"
                 id={user._id}
@@ -152,7 +155,7 @@ const handleTerminateChat = () => {
             </div>
           ))}
         </div>
-        <Button onClick={handleStartChat} className="mt-4 w-full">Start Chat</Button>
+        <Button onClick={handleStartChat} className={` w-full ${darkMode ? 'bg-customHoverBlack':'bg-customBlack'}`}>Start Chat</Button>
       </div>
     </div>
     

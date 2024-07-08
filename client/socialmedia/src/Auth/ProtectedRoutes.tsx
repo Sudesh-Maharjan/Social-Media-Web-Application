@@ -3,17 +3,20 @@ import { Outlet, useNavigate } from 'react-router-dom';
 import Cookies from 'js-cookie'
 import Login from '@/pages/Login/Login';
 import { toast } from 'sonner';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { setAccessToken } from '@/redux/slices/authSlice';
 import Header from '@/components/Header/index';
 import UserSuggestions from '@/components/UserSuggestions/UserSiggestions';
 import Chat from '@/components/Chat/Chat';
+import { AppState } from '@/types';
 interface JwtPayload {
   exp: number;
   userId: string;
   [key: string]: any;
 }
 const Protected = () => {
+  const darkMode = useSelector((state: AppState) => state.theme.darkMode);
+
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const [accessToken, setAccessTokenState] = useState<string | null>(null);
@@ -83,10 +86,10 @@ const Protected = () => {
         <div className="w-[18vw] flex justify-center ">
           <UserSuggestions />
         </div>
-        <div className="flex-grow bg-white">
+        <div className="flex-grow">
           <Outlet />
         </div>
-        <div className="w-[18vw] flex justify-center pt-5">
+        <div className={`w-[18vw] flex justify-center ${darkMode ? 'bg-customBlack' :'bg-customWhite'}`}>
     <Chat/>
 
         </div>

@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import Post, { Post as PostType } from "./model";
+import Post, { PostDocument } from "./model";
 import { StatusCodes } from "http-status-codes";
 import { checkPostOwnership } from "../../../Middleware/postAuthorization";
 
@@ -29,25 +29,20 @@ export const createPost = async (req: Request, res: Response) => {
       image = `/uploads/${req.file.filename}`;
       console.log(req.file.filename)
     }
-    const post = new Post({
-    id: currentId++,
+    const newPost = await Post.create({
     content: trimmedContent,
-    createDate: new Date(),
     creatorID: creatorID, 
-    creatorName: `${user.firstName} ${user.lastName}`,
     tags: tags || [],
     status: postStatus,
     comments: [],
     likes: [],
     shares: [],
     image: req.file ? image : undefined,
-  });
+  }) as PostDocument;
 
-    const newPost = await post.save();
-
-    const populatedPost = await Post.findById(newPost._id).populate('creatorID', 'firstName lastName');
-    const creator = populatedPost?.creatorID as User;
-    const formattedCreateDate = newPost.createDate.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+    await newPost.populate('creatorID', 'firstName lastName');
+    const creator = newPost?.creatorID as User;
+    const formattedCreateDate = newPost.createdAt.toLocaleDateString("en-US", { month: "short", day: "numeric" });
     const creatorName = `${creator.firstName} ${creator.lastName}`;
     return res.status(StatusCodes.CREATED).json({
       ...newPost.toObject(),
@@ -87,13 +82,12 @@ export const getPosts = async (req: Request, res: Response) => {
         { content: { $regex: searchRegex } }
       ];
     }
-    const posts = await Post.find(query).populate('creatorID', 'firstName lastName profilePicture');
+    const posts = await Post.find(query).populate('creatorID', 'firstName lastName profilePicture').sort({ createDate: -1 });
   
-    const formattedPosts = posts.map(post => {
+    const formattedPosts = posts.map((post: PostDocument) => {
       const creator = post.creatorID as User;
-      const createDate = moment(post.createDate);
-      const formattedDate = createDate.format("MMMM D");
-      const relativeTime = createDate.fromNow();
+      const formattedDate = moment(post.createdAt).format("MMMM D");
+      const relativeTime = moment(post.createdAt).fromNow();
       return {
         ...post.toObject(),
         creatorName: `${creator.firstName} ${creator.lastName}`,

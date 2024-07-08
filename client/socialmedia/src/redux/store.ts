@@ -8,6 +8,7 @@ import profileReducer from './slices/profileSlice';
 import notificationReducer from './slices/notificationSlice';
 import chatReducer from './slices/chatSlice';
 
+//create store
 const store = configureStore({
   reducer: {
     posts:postReducer,

@@ -5,11 +5,11 @@ import {
   selectUsersLoading,
   selectCurrentUser,
   followUser,
-  unfollowUser
+  unfollowUser,
+  selectUsers
 } from "@/redux/slices/userSlice";
 import { AppDispatch, RootState } from "@/redux/store";
 import { User, Post } from "@/types";
-import Header from "../../components/Header/index";
 import { MdOutlineMail, MdOutlineVerified } from "react-icons/md";
 import "../../../public/css/styles.css";
 import { useNavigate, useParams } from "react-router-dom";
@@ -21,10 +21,13 @@ const ProfilePage: React.FC = React.memo(() => {
   const { userId } = useParams();
   const loading = useSelector<RootState, boolean>(selectUsersLoading);
   const currentUser = useSelector(selectCurrentUser);
+  const users = useSelector(selectUsers);
   //putting logged in users id in state for conditional rendering of profile page.
   const [loggedInUserId, setLoggedInUserId] = React.useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
  const profilePictureUrl = useSelector(selectProfilePictureUrl);
+ console.log(users);
+ console.log(currentUser);
   useEffect(() => {
     const userData = localStorage.getItem("userId");
     if (userData) {
@@ -60,13 +63,13 @@ const ProfilePage: React.FC = React.memo(() => {
 
   const handleFollow = () => {
     if (currentUser && loggedInUserId) {
-      dispatch(followUser(currentUser._id)).unwrap();
+      dispatch(followUser(currentUser._id));
     }
   };
   
   const handleUnfollow = () => {
     if (currentUser && loggedInUserId) {
-      dispatch(unfollowUser(currentUser._id)).unwrap();
+      dispatch(unfollowUser(currentUser._id));
     }
   };
  
@@ -90,7 +93,6 @@ const ProfilePage: React.FC = React.memo(() => {
 
   return (
     <>
-      <Header />
       <div className="min-h-screen p-6">
         <div className="max-w-4xl mx-auto bg-gray-800 p-8 rounded-lg shadow-md">
           <div className="text-center mb-8 flex justify-center flex-col items-center">

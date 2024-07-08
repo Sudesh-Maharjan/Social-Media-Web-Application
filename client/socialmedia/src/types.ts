@@ -12,6 +12,9 @@ likes: string[];
 userId: string;
 creatorName: string;
 formattedCreateDate: string;
+creatorID: {
+   profilePicture: string;
+ };
 comments: Comment[];
 }
 export interface User {

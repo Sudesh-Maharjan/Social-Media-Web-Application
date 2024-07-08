@@ -42,7 +42,6 @@ const PostDetails: React.FC = () => {
     };
   return (
     <>
-    <Header/>
       <div className="flex">
       <div className=" w-full  shadow-md rounded-lg overflow-hidden">
       <div className="flex justify-between m-3">

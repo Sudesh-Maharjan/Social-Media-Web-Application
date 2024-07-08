@@ -21,7 +21,6 @@ import {
 import { AppState, Post } from "@/types";
 import '../../../public/css/styles.css';
 import CommentComponent from "../Comment/Comment"; 
-import UserSuggestions from "../UserSuggestions/UserSiggestions";
 import { useNavigate } from "react-router-dom";
 import { AiOutlineLike, AiFillLike } from "react-icons/ai";
 import {
@@ -29,7 +28,6 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from "@/components/ui/hover-card"
-import Chat from "../Chat/Chat";
 const PostComponent = () => {
   const darkMode = useSelector((state: AppState) => state.theme.darkMode);
 
@@ -38,7 +36,6 @@ const PostComponent = () => {
   const { posts, loading, error } = useSelector((state: RootState) => state.posts);
   const userId = useSelector((state: RootState) => state.auth.userId);
   const users = useSelector((state: RootState) => state.users.users);
-console.log(userId)
   const [content, setContent] = useState("");
   const [image, setImage] = useState<File | null>(null);
   //create post or update post form
@@ -48,7 +45,8 @@ console.log(userId)
   const [showCommentInput, setShowCommentInput] = useState<{ [key: string]: boolean }>({});
   const [likedPosts, setLikedPosts] = useState<string[]>([]);
   const formRef = useRef<HTMLFormElement>(null);
-
+  const [profilePicture, setProfilePicture] = useState('');
+  const [firstName, setFirstName] = useState('');
   useEffect(() => {
     dispatch(fetchPosts());
   }, [dispatch]);
@@ -161,120 +159,128 @@ console.log(userId)
       </div>
     );
   };
-  return (
-    <>
-      <div className={`border inline-block m-5 p-2 absolute z-10 rounded-lg shadow-md ${darkMode ? 'bg-customBlack' : 'bg-customWhite'}`}>
-        <div className="flex flex-col gap-5 ">
-          <UserSuggestions/>
-          <Button className={`rounded-lg p-4 cursor-pointer  ${darkMode ? 'bg-customHoverBlack hover:bg-customHoverBlack' : 'bg-customBlack'}`} onClick={() => setShowForm(!showForm)}>
-            Post
-          </Button>
+  useEffect(() => {
+    const userData = localStorage.getItem('User_data');
+    if(userData){
+       const user = JSON.parse(userData);
+       setProfilePicture(user.profilePicture);
+       setFirstName(user.firstName);
+    }
+      }, []);
+  return (<>
+    <div className={`min-h-screen flex flex-col items-center justify-center  ${darkMode ? 'bg-customBlack' : 'bg-customWhite'}`}>
+      {showForm && (
+        <div className="absolute top-0 left-0 w-full h-full bg-gray-800 bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-10">
+          <form ref={formRef} onSubmit={handleSubmit} encType="multipart/form-data" className="bg-white shadow-md rounded-lg p-8 h-[400px] w-[500px]">
+            <textarea
+              placeholder="What's on your mind?"
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              className="w-full px-3 py-2 border rounded-lg mb-3 focus:outline-none focus:border-blue-500"
+              rows={4}
+            ></textarea>
+            {isEditing && currentPostId !== null && (
+              <div className="mb-3">
+                <img
+                  src={posts.find((post) => post._id === currentPostId)?.image || ""}
+                  alt="Previous Image"
+                  className="w-full h-auto mt-2"
+                />
+              </div>
+            )}
+            <input type="file" onChange={handleFileChange} className="mb-3" />
+            <Button type="submit" className="text-white px-4 py-2 rounded-lg transition duration-200">
+              {isEditing ? "Update Post" : "Create Post"}
+            </Button>
+          </form>
         </div>
-      </div>
-      <div className={`min-h-screen flex flex-col items-center justify-center  ${darkMode ? 'bg-customBlack' : 'bg-customWhite'}`}>
-        {showForm && (
-          <div className="absolute top-0 left-0 w-full h-full bg-gray-800 bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-10">
-            <form ref={formRef} onSubmit={handleSubmit} encType="multipart/form-data" className="bg-white shadow-md rounded-lg p-8 w-96">
-              <textarea
-                placeholder="What's on your mind?"
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                className="w-full px-3 py-2 border rounded-lg mb-3 focus:outline-none focus:border-blue-500"
-                rows={4}
-              ></textarea>
-              {isEditing && currentPostId !== null && (
-                <div className="mb-3">
-                  <img
-                    src={posts.find((post) => post._id === currentPostId)?.image || ""}
-                    alt="Previous Image"
-                    className="w-full h-auto mt-2"
-                  />
-                </div>
-              )}
-              <input type="file" onChange={handleFileChange} className="mb-3" />
-              <Button type="submit" className="text-white px-4 py-2 rounded-lg transition duration-200">
-                {isEditing ? "Update Post" : "Create Post"}
-              </Button>
-            </form>
-          </div>
-        )}
+      )}
 
-        {loading && <p className="mt-4 text-center">Loading...</p>}
-        {error && <p className="mt-4 text-center text-red-500">{error}</p>}
-        <div className="">
+      {loading && <p className="mt-4 text-center">Loading...</p>}
+      {error && <p className="mt-4 text-center text-red-500">{error}</p>}
+      <div className="">
 <h1 className="font-bold text-xl">Posts</h1>
-        <div className="mt-4 w-[680px] scrollable-container border-x-2 px-4" style={{ maxHeight: "600px" }}>
-          {posts.map((post) => (
-            <div key={post._id} className="bg-white rounded-lg p-4 mb-4">
-              <div className="border p-3 rounded-md shadow-md relative">
-              <div className="absolute top-1 right-3">
-                <DropdownMenu>
-                  <DropdownMenuTrigger>•••</DropdownMenuTrigger>
-                  <DropdownMenuContent>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => handleEdit(post)}>
-                      Edit
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleDelete(post._id)}>
-                      Delete
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-              <div className="flex ">
-              <img
-                    src={post.image}
-                    alt="Profile"
-                    className="w-10 h-10 transition duration-100 rounded-full mr-2 cursor-pointer hover:opacity-85"
-                  />
-                  <div className="flex flex-col">
-                    <a href="/" className="hover:underline">
-                <h4 className="text-sm font-semibold">{post.creatorName}</h4>
-                </a>
-                <small className="text-slate-500 text-sm">{post.formattedCreateDate}</small>
-                </div>
-              </div>
-              <p className="text-gray-700">{post.content}</p>
-              {post.image && (
-                <img src={`${post.image}`} alt="Post" className="w-full h-[600px] mt-2 object-cover cursor-pointer" onClick={() => handlePhotoClick(post._id)} />
-              )}
-              {renderLikedUsers(post)}
-              <div className="flex justify-between mt-2 border-y-2">
-
-              <button onClick={() => handleLike(post._id)} className="text-md flex items-center justify-center gap-1">
-                    {userId && likedPosts.includes(post._id)  ? (
-                      <>
-                        <AiFillLike className="text-xl font-bold" /> Liked
-                      </>
-                    ) : (
-                      <>
-                        <AiOutlineLike className="text-xl" /> Like
-                      </>
-                    )}
-                  </button>
-                <button className="text-gray-600 hover:text-gray-800 flex items-center hover:bg-slate-100 p-2 transition duration-300 rounded-md" onClick={() => handleCommentClick(post._id)}>
-                  <FaRegComment className="mx-1" />
-                  Comment
-                </button>
-                <button className="text-gray-600 hover:text-gray-800 flex items-center">
-                  <IoShareSocial className="mx-1" />
-                  Share
-                </button>
-              </div>
-              </div>
-              {showCommentInput[post._id] && (
-                <CommentComponent postId={post._id} comments={post.comments} />
-              )}
+        <div className="border rounded-md p-3 m-2">
+<div className="flex gap-5 " onClick={() => setShowForm(!showForm)}>
+<img
+                  className="h-10 w-10 cursor-pointer hover:opacity-85 transition duration-100 rounded-full object-cover"
+                  src={profilePicture}
+                  alt="Profile"
+                />
+  <input type="text" className="border rounded-full h-10 bg-slate-100 px-2 w-full hover:bg-slate-200 transition duration-200" placeholder={`What's on your mind... ${firstName} ?`} />
+        
+      </div>
+      </div>
+      <div className={`mt-4 w-[680px] scrollable-container ${darkMode ? 'border-x-2 border-slate-600': 'border-x-2  '} px-4`} style={{ maxHeight: "600px" }}>
+        {posts.map((post) => (
+          <div key={post._id} className={` ${darkMode ? 'bg-customBlack text-white' : 'bg-customWhite'} rounded-lg p-4 mb-4`}>
+            <div className="border p-3 rounded-md shadow-md relative">
+            <div className="absolute top-1 right-3">
+              <DropdownMenu>
+                <DropdownMenuTrigger>•••</DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => handleEdit(post)}>
+                    Edit
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleDelete(post._id)}>
+                    Delete
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
-          ))}
-        </div>
-        </div>
+            <div className="flex ">
+            <img
+                  src={post.creatorID.profilePicture}
+                  alt="Profile"
+                  className="w-10 h-10 transition duration-100 rounded-full mr-2 cursor-pointer hover:opacity-85"
+                />
+                <div className="flex flex-col">
+                  <a href="/" className="hover:underline">
+              <h4 className="text-sm font-semibold">{post.creatorName}</h4>
+              </a>
+              <small className={` ${darkMode ? ' text-slate-400' : 'text-slate-500'} text-sm`}>{post.formattedCreateDate}</small>
+              </div>
+            </div>
+            <p className="text-gray-700">{post.content}</p>
+            {post.image && (
+              <img src={`${post.image}`} alt="Post" className="w-full h-[600px] mt-2 object-cover cursor-pointer" onClick={() => handlePhotoClick(post._id)} />
+            )}
+            {renderLikedUsers(post)}
+            <div className="flex justify-between mt-2 border-y-2">
+
+            <button onClick={() => handleLike(post._id)} className="text-md flex items-center justify-center gap-1">
+                  {userId && likedPosts.includes(post._id)  ? (
+                    <>
+                      <AiFillLike className="text-xl font-bold" /> Liked
+                    </>
+                  ) : (
+                    <>
+                      <AiOutlineLike className="text-xl" /> Like
+                    </>
+                  )}
+                </button>
+              <button className="text-gray-600 hover:text-gray-800 flex items-center hover:bg-slate-100 p-2 transition duration-300 rounded-md" onClick={() => handleCommentClick(post._id)}>
+                <FaRegComment className="mx-1" />
+                Comment
+              </button>
+              <button className="text-gray-600 hover:text-gray-800 flex items-center">
+                <IoShareSocial className="mx-1" />
+                Share
+              </button>
+            </div>
+            </div>
+            {showCommentInput[post._id] && (
+              <CommentComponent postId={post._id} comments={post.comments} />
+            )}
+          </div>
+        ))}
       </div>
-      <div className="absolute top-24 right-5">
-      <Chat/>
       </div>
-    </>
-  );
+    </div>
+    <div className="absolute top-24 right-5">
+    </div>
+  </>);
 };
 
 export default PostComponent;

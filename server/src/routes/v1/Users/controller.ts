@@ -314,7 +314,7 @@ export const unfollowUser = async (req: AuthenticatedRequest, res: Response) =>{
     await user.save();
     await userToUnfollow.save();
 
-    res.status(200).send('Unfollowed successfully');
+    res.status(200).json(user);
   }catch(error){
     res.status(500).send('Internal Server Error');
   }

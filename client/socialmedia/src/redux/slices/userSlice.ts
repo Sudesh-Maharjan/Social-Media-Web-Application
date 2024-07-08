@@ -93,9 +93,8 @@ export const followUser = createAsyncThunk('users/followUser', async (userIdToFo
          Authorization: `Bearer ${accessToken}`
        }
      });
-     const updatedUser = response.data;
-    toast.success(`You have unfollowed ${updatedUser.name}`);
-     return updatedUser;
+    // toast.success(`You have unfollowed ${updatedUser.name}`);
+     return response.data;
    } catch (error) {
       throw (error as Error).message;
    }
@@ -132,6 +131,7 @@ const userSlice = createSlice({
       .addCase(followUser.fulfilled, (state, action) => {
         state.loading = false;
         const updatedUser = action.payload;
+        console.log(updatedUser)
         state.users = state.users.map((user) =>
           user._id === updatedUser._id ? updatedUser : user
         );
@@ -140,12 +140,13 @@ const userSlice = createSlice({
           state.currentUser = updatedUser;
         }
         if (state.currentUser) {
-          state.currentUser.following.push(updatedUser);
+          state.currentUser.followers.push(updatedUser);
         }
       })
        .addCase(unfollowUser.fulfilled, (state, action) => {
         state.loading = false;
         const updatedUser = action.payload;
+        console.log(updatedUser)
         state.users = state.users.map((user) =>
           user._id === updatedUser._id ? updatedUser : user
         );
@@ -154,8 +155,8 @@ const userSlice = createSlice({
           state.currentUser = updatedUser;
         }
         if (state.currentUser) {
-          state.currentUser.following = state.currentUser.following.filter(
-            (followedUser) => followedUser._id !== updatedUser._id
+         state.currentUser.followers = state.currentUser.followers.filter(
+            (follower) => follower._id !== updatedUser._id
           );
         }
       })

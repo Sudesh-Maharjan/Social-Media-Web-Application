@@ -5,6 +5,9 @@ import Login from '@/pages/Login/Login';
 import { toast } from 'sonner';
 import { useDispatch } from 'react-redux';
 import { setAccessToken } from '@/redux/slices/authSlice';
+import Header from '@/components/Header/index';
+import UserSuggestions from '@/components/UserSuggestions/UserSiggestions';
+import Chat from '@/components/Chat/Chat';
 interface JwtPayload {
   exp: number;
   userId: string;
@@ -71,7 +74,27 @@ const Protected = () => {
       return null;
     }
   };
-  return accessToken ? <Outlet/> : <Login/>
+  return accessToken ?(
+    <div className="flex flex-col h-screen">
+      <div className="h-[9vh]">
+        <Header />
+      </div>
+      <div className="flex flex-grow">
+        <div className="w-[18vw] flex justify-center ">
+          <UserSuggestions />
+        </div>
+        <div className="flex-grow bg-white">
+          <Outlet />
+        </div>
+        <div className="w-[18vw] flex justify-center pt-5">
+    <Chat/>
+
+        </div>
+      </div>
+    </div>
+  ) : (
+    <Login />
+  );
 }
 
 export default Protected

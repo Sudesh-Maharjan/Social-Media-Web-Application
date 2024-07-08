@@ -18,6 +18,7 @@ import { AppDispatch, RootState } from '@/redux/store';
 import { searchUsers , selectCurrentUser, selectUsers} from '@/redux/slices/userSlice';
 import { User } from '@/types';
 import { fetchNotifications , deleteNotification} from '@/redux/slices/notificationSlice';
+import '../../../public/css/styles.css';
 
 // const currentUser =
 const Index = () => {
@@ -133,7 +134,7 @@ useEffect(() => {
     dispatch(deleteNotification(notificationId));
   };
   return (
-   <nav className={`sticky z-30 border border-b-1 top-0 border-b-black ${darkMode ? 'bg-customSoftBlack' : 'bg-customWhite'}`}>
+   <nav className={`sticky z-30 border border-b-1 top-0  h-full ${darkMode ? 'bg-customSoftBlack' : 'bg-customWhite'}`}>
    <div className="max-w-7xl mx-auto px-4">
      <div className="flex justify-between items-center">
        <div className="flex items-center">
@@ -240,7 +241,7 @@ useEffect(() => {
               </svg>
             </button>
           </div>
-          <div className="divide-y divide-gray-300">
+          <div className="divide-y divide-gray-300 scrollable-container">
             {notifications.length > 0 ? (
               notifications.map(notification => (
                 <div key={notification._id} className={`px-4 py-3 cursor-pointer hover:bg-gray-100 ${darkMode ? 'bg-customBlack text-customWhite' : 'bg-customWhite text-customBlack'}`}>
@@ -251,7 +252,7 @@ useEffect(() => {
                 </div>
               ))
             ) : (
-              <p className="px-4 py-3 text-sm">No notifications</p>
+              <p className={`${darkMode ? 'text-customWhite': 'text-customBlack'} mx-2 px-4 py-3 text-sm`}>No notifications</p>
             )}
                     </div>
                   </div>

@@ -48,7 +48,7 @@ const UserSuggestions = () => {
   const randomUsers = getRandomUsers(users, 5);
 
   return (
-    <div className={`w-72 ${darkMode ? 'bg-customBlack':'bg-customWhite'}`}>
+    <div className={`w-72 mt-5 p-3 ${darkMode ? 'bg-customBlack':'bg-customWhite'}`}>
       <h1 className={`font-bold rounded-md p-2 flex justify-center items-center ${darkMode ? 'bg-customHoverBlack text-customWhite' : 'bg-customGray'}`}>User Suggestions</h1>
       {randomUsers.map((user) => (
         <div key={user._id} className={`${darkMode ? 'bg-customHoverBlack text-customWhite': 'bg-customGray text-customBlack'} p-2 my-3 rounded-lg flex gap-4`}>

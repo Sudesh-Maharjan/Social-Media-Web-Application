@@ -369,7 +369,7 @@ export const deleteProfilePicture = async (req: AuthenticatedRequest, res: Respo
       return res.status(400).json({ message: 'No profile picture to delete' });
     }
 
-    // Delete file from storage (assuming local file system)
+    // Delete file from local storage 
     fs.unlinkSync(profilePicturePath);
 
     // Update user document to clear profile picture field

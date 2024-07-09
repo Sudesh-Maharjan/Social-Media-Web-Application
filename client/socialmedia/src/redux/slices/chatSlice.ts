@@ -35,10 +35,11 @@ const chatSlice = createSlice({
   },
   reducers: {
     addMessage: (state, action: { payload: never[] }) => {
-      if (Array.isArray(action.payload)) {
-      state.messages = [...state.messages, ...action.payload];
-      }else{
-        state.messages.push(action.payload)
+      const message = action.payload;
+      if (Array.isArray(message)) {
+        state.messages = [...state.messages, ...message];
+      } else {
+        state.messages.push(message);
       }
     },
   },

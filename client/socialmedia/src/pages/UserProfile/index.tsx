@@ -6,7 +6,7 @@ import {
   selectCurrentUser,
   followUser,
   unfollowUser,
-  selectUsers
+  selectUsers,
 } from "@/redux/slices/userSlice";
 import { AppDispatch, RootState } from "@/redux/store";
 import { User, Post } from "@/types";
@@ -14,7 +14,11 @@ import { MdOutlineMail, MdOutlineVerified } from "react-icons/md";
 import "../../../public/css/styles.css";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { deleteProfilePicture, selectProfilePictureUrl, uploadProfilePicture } from "@/redux/slices/profileSlice";
+import {
+  deleteProfilePicture,
+  selectProfilePictureUrl,
+  uploadProfilePicture,
+} from "@/redux/slices/profileSlice";
 const ProfilePage: React.FC = React.memo(() => {
   const dispatch: AppDispatch = useDispatch();
   const navigate = useNavigate();
@@ -22,9 +26,12 @@ const ProfilePage: React.FC = React.memo(() => {
   const loading = useSelector<RootState, boolean>(selectUsersLoading);
   const currentUser = useSelector(selectCurrentUser);
   //putting logged in users id in state for conditional rendering of profile page.
-  const [loggedInUserId, setLoggedInUserId] = React.useState<string | null>(null);
+  const [loggedInUserId, setLoggedInUserId] = React.useState<string | null>(
+    null
+  );
   const fileInputRef = useRef<HTMLInputElement | null>(null);
- const profilePictureUrl = useSelector(selectProfilePictureUrl);
+  const profilePictureUrl = useSelector(selectProfilePictureUrl);
+  console.log(currentUser);
   useEffect(() => {
     const userData = localStorage.getItem("userId");
     if (userData) {
@@ -34,12 +41,11 @@ const ProfilePage: React.FC = React.memo(() => {
         console.error("Failed to parse user data from localStorage", error);
       }
     }
-    if(userId){
+    if (userId) {
       dispatch(fetchUserDetails({ _id: userId }));
-
-    }else if(loggedInUserId){
-      dispatch(fetchUserDetails({_id: loggedInUserId}));
-    }else{
+    } else if (loggedInUserId) {
+      dispatch(fetchUserDetails({ _id: loggedInUserId }));
+    } else {
       console.error("No user id provided");
       navigate("/home");
     }
@@ -50,7 +56,13 @@ const ProfilePage: React.FC = React.memo(() => {
     if (file) {
       const formData = new FormData();
       formData.append("profilePicture", file);
-      dispatch(uploadProfilePicture(formData));
+      dispatch(uploadProfilePicture(formData))
+      .then((newProfilePictureUrl) => {
+        localStorage.setItem("profilePicture", newProfilePictureUrl);
+      })
+      .catch((error) => {
+        console.error("Failed to upload profile picture:", error);
+      });
     }
   };
 
@@ -63,13 +75,13 @@ const ProfilePage: React.FC = React.memo(() => {
       dispatch(followUser(currentUser._id));
     }
   };
-  
+
   const handleUnfollow = () => {
     if (currentUser && loggedInUserId) {
       dispatch(unfollowUser(currentUser._id));
     }
   };
- 
+
   if (loading) {
     return (
       <div className="min-h-screen flex justify-center items-center bg-black text-white">
@@ -87,44 +99,62 @@ const ProfilePage: React.FC = React.memo(() => {
   }
   const isOwnProfile = currentUser._id === loggedInUserId;
 
-
   return (
     <>
       <div className="min-h-screen p-6">
         <div className="max-w-4xl mx-auto bg-gray-800 p-8 rounded-lg shadow-md">
           <div className="text-center mb-8 flex justify-center flex-col items-center">
-          <div 
-              className="rounded-full w-56 h-56 bg-slate-300 hover:cursor-pointer hover:opacity-85 flex justify-center items-center"
-              onClick={() => {
-                if (fileInputRef.current) {
-                  fileInputRef.current.click();
-                } else {
-                  console.log("File input ref is null");
-                }
-              }}
-            >
-              {currentUser.profilePicture || profilePictureUrl ? (
-                <img src={currentUser.profilePicture || profilePictureUrl} alt="Profile" className="w-full h-full object-cover rounded-full" />
-              ) : (
-                <>
-                Click to upload
-                <input
-                type="file"
-                id="upload-photo"
-                accept="image/*"
-                ref={fileInputRef}
-                onChange={handleUploadPicture}
-                className="hidden"
-              />
-                </>
-              )}
-            </div>
-              
-              <button onClick={handleDeletePicture}>Delete</button>
+            {!isOwnProfile && (
+              <div className="w-56 h-56 bg-customGray flex justify-center items-center rounded-full">
+                <img
+                  src={currentUser.profilePicture || profilePictureUrl}
+                  alt="Profile"
+                  className="w-full h-full object-cover rounded-full"
+                />
+              </div>
+            )}
+            {isOwnProfile && (
+              <>
+                <div
+                  className="rounded-full w-56 h-56 bg-slate-300 hover:cursor-pointer hover:opacity-85 flex justify-center items-center"
+                  onClick={() => {
+                    if (fileInputRef.current) {
+                      fileInputRef.current.click();
+                    } else {
+                      console.log("File input ref is null");
+                    }
+                  }}
+                >
+                  {currentUser.profilePicture || profilePictureUrl ? (
+                    <img
+                      src={currentUser.profilePicture || profilePictureUrl}
+                      alt="Profile"
+                      className="w-full h-full object-cover rounded-full"
+                    />
+                  ) : (
+                    <>
+                      Click to upload
+                      <input
+                        type="file"
+                        id="upload-photo"
+                        accept="image/*"
+                        ref={fileInputRef}
+                        onChange={handleUploadPicture}
+                        className="hidden"
+                      />
+                    </>
+                  )}
+                </div>
+
+                <button onClick={handleDeletePicture}>Delete</button>
+              </>
+            )}
             <h1 className="text-3xl font-bold mt-7 mb-2">{`${currentUser.firstName} ${currentUser.lastName}`}</h1>
             {!isOwnProfile && (
               <div className="mt-4">
-                {currentUser.followers.some(follower => follower._id === loggedInUserId) ? (
+                {currentUser.followers.some(
+                  (follower) => follower._id === loggedInUserId
+                ) ? (
                   <Button
                     onClick={handleUnfollow}
                     className=" text-white px-4 py-2 rounded-3xl"

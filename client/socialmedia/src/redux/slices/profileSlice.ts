@@ -33,9 +33,10 @@ export const uploadProfilePicture = createAsyncThunk(
       });
 
       dispatch(uploadProfilePictureSuccess(response.data.imagePath));
-      console.log('Image path:', response.data.imagePath)
+      toast.success('Profile picture uploaded successfully');
       return response.data.imagePath;
     } catch (error: any) {
+      toast.error('Failed to upload profile picture');
       dispatch(uploadProfilePictureFailure(error.message || 'Failed to upload profile picture'));
       throw error;
     }

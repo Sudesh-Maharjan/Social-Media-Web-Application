@@ -47,3 +47,20 @@ export interface Comment {
    createdAt: string;
    read: boolean;
  }
+ export interface StoryState {
+   stories: Array<{
+     _id: string;
+     mediaUrl: string;
+     mediaType: string;
+     user: {
+       firstName: string;
+       lastName: string;
+     };
+   }>;
+   loading: boolean;
+   error: string | null;
+ }
+ export interface StoryData {
+   mediaUrl: File;
+   mediaType: string;
+ }

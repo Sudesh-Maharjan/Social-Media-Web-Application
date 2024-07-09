@@ -7,6 +7,7 @@ import postRoutes from './routes/v1/Posts/index';
 import commentRoutes from './routes/v1/Comment/index';
 import notificationRoutes from './routes/v1/Notification/index';
 import messageRoutes from './routes/v1/Chat/index';
+import storyRoutes from './routes/v1/Story/index';
 import path from 'path';
 import { Server } from 'socket.io';
 import http from 'http';
@@ -40,6 +41,7 @@ app.use('/api/v1/posts', postRoutes);
 app.use('/api/v1/comments', commentRoutes);
 app.use('/api/v1/notifications', notificationRoutes)
 app.use('/api/v1/messages', messageRoutes);
+app.use('/api/v1/stories', storyRoutes);
 io.on('connection', (socket) =>{
    console.log('A new user has been connected', socket.id);
 socket.on('storeSocketId', async(userId: string) => {
@@ -58,29 +60,42 @@ socket.on('storeSocketId', async(userId: string) => {
     }
 });
 
-   socket.on('startPrivateChat', async(data) => {
-     const {recipientId, roomId} = data;
-     try {
-      const recipient = await User.findById(recipientId);
-      if(recipient && recipient.socketID){
-        socket.join(roomId);//sender joins the room
-        const chatHistory = await Message.find({roomId}).sort({timeStamp: 1});
-        console.log('ChatHistory',chatHistory)
-        socket.emit('fetchChatHistory', chatHistory);//Emmit chat history to sender
-        console.log('Sender joined room:', roomId);
-         io.to(recipient.socketID).emit('privateChatStarted', {
-          roomId,
-            senderId: socket.id
-         });
-         console.log('Chat Started with:', recipientId)
-        
-      }else{
-         console.error('Recipient not found or not conncted!');
-      }
-     } catch (error) {
-      console.error('Error sending message:', error)
+   socket.on('startChat', async(data) => {
+     const {recipientIds, roomId} = data;
+     try{
+      const recipients = await User.find({_id: {$in: recipientIds} })
+      if(recipients.length > 1){
+        recipients.forEach((recipient) =>{
+          if(recipient.socketID){
+            socket.join(roomId);
+            io.to(recipient.socketID).emit('groupChatStarted', {
+              roomId,
+              senderId: socket.id,
+              participants: recipientIds,
+            });
+          }
+        });
+      }else if(recipients.length === 1){
+        //Private Chat
+        const recipient = recipients[0];
+        if(recipient && recipient.socketID){
+socket.join(roomId);
+io.to(recipient.socketID).emit('privateChatStarted', {
+  roomId,
+  senderId: socket.id,
+});
+        }
+     }else {
+      console.error('Recipient not found or not connected!');
+     }
+     socket.join(roomId);
+     const chatHistory = await Message.find({ roomId }).sort({ timeStamp: 1 });
+     socket.emit('fetchChatHistory', chatHistory);
+     }catch(error){
+      console.error('Error starting chat:', error);
      }
     });
+     
     //Join the room when notified
     socket.on('joinRoom', async(roomId) =>{
       socket.join(roomId);
@@ -92,6 +107,10 @@ socket.on('storeSocketId', async(userId: string) => {
   
     socket.on('message', async (msg) => {
       const { message, type, roomId, senderId } = msg;
+      if (!roomId) {
+        console.error('Room ID is missing');
+        return;
+      }
   //Save message to database
   const newMessage = new Message({
     roomId,
@@ -100,30 +119,19 @@ socket.on('storeSocketId', async(userId: string) => {
     message,
   });
   await newMessage.save();//save message to db
-  
       // Emit message based on type
-      if (type === 'private') {
-        socket.broadcast.to(roomId).emit('message', {
-          message,
-          senderSocketId: socket.id,
-          type,
-          roomId,
-        });
-      } else {
-        socket.broadcast.emit('message', {
-          message,
-          senderSocketId: socket.id,
-          type,
-        });
-      }
+      socket.broadcast.to(roomId).emit('message', {
+        message,
+        senderSocketId: socket.id,
+        type,
+        roomId,
+      });
     });
+
    socket.on('typing', (data) => {
       const { type, roomId } = data;
-      if (type === 'private') {
-        socket.broadcast.to(roomId).emit('typing', { senderId: socket.id, type, roomId });
-      } else {
-        socket.broadcast.emit('typing', { senderId: socket.id });
-      }
+     socket.broadcast.to(roomId).emit('typing', {
+      senderId: socket.id, type, roomId});
     });
     
    socket.on('disconnect',async (reason)=>{

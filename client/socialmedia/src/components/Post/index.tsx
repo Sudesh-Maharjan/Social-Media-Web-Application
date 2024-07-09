@@ -27,7 +27,8 @@ import {
   HoverCard,
   HoverCardContent,
   HoverCardTrigger,
-} from "@/components/ui/hover-card"
+} from "@/components/ui/hover-card";
+import List from '../../components/Story/List'
 const PostComponent = () => {
   const darkMode = useSelector((state: AppState) => state.theme.darkMode);
 
@@ -168,6 +169,9 @@ const PostComponent = () => {
       }, []);
   return (<>
     <div className={` flex flex-col items-center justify-center  ${darkMode ? 'bg-customBlack' : 'bg-customWhite'}`}>
+      <div className="w-[700px] my-4">
+    <List/>
+    </div>
     {showForm && (
           <div className="absolute top-20 left-0 w-full h-full bg-gray-800 bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-10">
             <form

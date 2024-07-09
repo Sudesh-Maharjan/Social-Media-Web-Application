@@ -11,13 +11,13 @@ const Story = ({ story }: { story: StoryData }) => {
   // };
 
   return (
-    <div className=" p-2 ">
+    <div className="relative  w-[170px]  h-[260px]">
       {story.mediaType === 'image' ? (
-        <img src={story.mediaUrl} alt="Story" className="object-cover rounded-lg cursor-pointer transition duration-300 hover:border-2 mb-2 h-[260px] w-[170px]" />
+        <img src={story.mediaUrl} alt="Story" className="object-cover rounded-lg cursor-pointer transition duration-700 hover:border-2 h-full w-full" />
       ) : (
-        <video src={story.mediaUrl} controls className="w-full h-auto mb-2" />
+        <video src={story.mediaUrl} controls className="w-full h-full mb-2" />
       )}
-      <p className="mb-2">{story.user.firstName} {story.user.lastName}</p>
+      <p className="absolute bottom-2 font-bold text-customWhite m-2">{story.user.firstName} {story.user.lastName}</p>
       {/* <button onClick={handleDelete} className="bg-red-500 text-white py-1 px-2 rounded">
         Delete
       </button> */}

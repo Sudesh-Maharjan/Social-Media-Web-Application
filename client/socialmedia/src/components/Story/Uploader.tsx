@@ -27,9 +27,9 @@ console.error("No file selected")
   };
 
   return (
-    <div className=" bg-black p-4 rounded-md h-[260px] w-[170px]">
+    <div className=" bg-black p-4 rounded-lg absolute z-10 transition-transform duration-300">
       <input type="file" accept="image/*,video/*" onChange={handleFileChange} className='mb-2'/>
-      <button onClick={handleUpload} className="bg-blue-500 text-white py-2 px-4 rounded">
+      <button onClick={handleUpload} className="bg-customHoverBlack text-white py-2 px-4 rounded">
         Upload
       </button>
     </div>

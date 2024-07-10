@@ -83,7 +83,7 @@ const Protected = () => {
         <Header />
       </div>
       <div className="flex flex-grow">
-        <div className="w-[18vw] flex justify-center ">
+        <div className="w-[24vw] flex justify-center ">
           <UserSuggestions />
         </div>
         <div className="flex-grow">

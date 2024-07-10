@@ -1,0 +1,29 @@
+.loader-container {
+  position: relative;
+  width: 100%;
+  height: 2px;
+  background-color: #ccc;
+}
+
+.loader-ball {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 20px; /* Adjust size as needed */
+  height: 20px; /* Adjust size as needed */
+  background-color: blue;
+  border-radius: 50%;
+}
+
+@keyframes loader-animation {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.animate-loader {
+  animation: loader-animation 10s linear infinite;
+}

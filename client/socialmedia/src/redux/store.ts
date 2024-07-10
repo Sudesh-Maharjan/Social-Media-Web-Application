@@ -8,6 +8,7 @@ import profileReducer from './slices/profileSlice';
 import notificationReducer from './slices/notificationSlice';
 import chatReducer from './slices/chatSlice';
 import storyReducer from './slices/storySlice';
+import currentStoryReducer from './slices/currentStorySlice';
 //create store
 const store = configureStore({
   reducer: {
@@ -20,6 +21,7 @@ const store = configureStore({
     notifications: notificationReducer,
     chat: chatReducer,
     stories: storyReducer,
+    currentStory: currentStoryReducer,
   },
 });
 export type RootState = ReturnType<typeof store.getState>;

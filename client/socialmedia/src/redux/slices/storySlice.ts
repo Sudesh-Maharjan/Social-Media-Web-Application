@@ -17,6 +17,7 @@ export const fetchStories = createAsyncThunk('stories/fetchStories', async () =>
   // if(response.data === undefined || null || [] || {}){
   //   toast.error('No stories posted yet');
   // }
+  console.log(response.data);
   return response.data;
 });
 
@@ -69,8 +70,16 @@ const storySlice = createSlice({
         state.loading = false;
         state.error = action.error.message || 'Failed to fetch stories';
       })
+      .addCase(addStory.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
       .addCase(addStory.fulfilled, (state, action) => {
         state.stories.push(action.payload);
+      })
+      .addCase(addStory.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message;
       })
       .addCase(deleteStory.fulfilled, (state, action) => {
         state.stories = state.stories.filter((story) => story._id !== action.payload);
